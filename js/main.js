@@ -46,7 +46,7 @@ let edges = [
 
 // define camera position (faces -y)
 let Cx = 1.5;
-let Cy = 3;
+let Cy = 1.5;
 let Cz = 1.5;
 let camera_position = [Cx, Cy, Cz];
 let camera_distance = 1;
@@ -54,47 +54,59 @@ let camera_distance = 1;
 // define output scaling
 let scale = 200;
 
-// calculate projection
-let projected_points = []
-for (let i = 0; i < points.length; i++) {
-    // get point
-    let Px = points[i][0];
-    let Py = points[i][1];
-    let Pz = points[i][2];
+function project_and_render() {
+    // calculate projection
+    let projected_points = []
+    for (let i = 0; i < points.length; i++) {
+        // get point
+        let Px = points[i][0];
+        let Py = points[i][1];
+        let Pz = points[i][2];
 
-    // get distances from camera
-    let Dx = Px - Cx;
-    let Dy = Py - Cy;
-    let Dz = Pz - Cz;
+        // get distances from camera
+        let Dx = Px - Cx;
+        let Dy = Py - Cy;
+        let Dz = Pz - Cz;
 
-    // project
-    let projected_y = camera_distance*(Dz/Dy);
-    let projected_x = camera_distance*(Dx/Dy);
+        // project
+        let projected_y = camera_distance*(Dz/Dy);
+        let projected_x = camera_distance*(Dx/Dy);
 
-    // scale and transform to center of canvas
-    let final_x = origin_x - projected_x*scale;
-    let final_y = origin_y + projected_y*scale;
+        // scale and transform to center of canvas
+        let final_x = origin_x - projected_x*scale;
+        let final_y = origin_y + projected_y*scale;
 
-    projected_points.push([final_x, final_y])
+        projected_points.push([final_x, final_y])
+    }
+
+    // draw points
+    for (let p = 0; p < projected_points.length; p++) {
+        let final_x = projected_points[p][0];
+        let final_y = projected_points[p][1];
+        //ctx.fillRect(final_x-1, final_y-1, 2, 2);
+    }
+
+    // draw edges
+    for (let e = 0; e < edges.length; e++) {
+        let p1 = projected_points[edges[e][0]];
+        let p2 = projected_points[edges[e][1]];
+
+        // set line stroke and line width
+        ctx.beginPath();
+        ctx.moveTo(p1[0], p1[1]);
+        ctx.lineTo(p2[0], p2[1]);
+        ctx.stroke();
+    }
 }
 
-// draw points
-for (let p = 0; p < projected_points.length; p++) {
-    let final_x = projected_points[p][0];
-    let final_y = projected_points[p][1];
-    //ctx.fillRect(final_x-1, final_y-1, 2, 2);
-}
 
-// draw edges
-for (let e = 0; e < edges.length; e++) {
-    let p1 = projected_points[edges[e][0]];
-    let p2 = projected_points[edges[e][1]];
+setInterval(function () {
 
-	// set line stroke and line width
-    ctx.beginPath();
-    ctx.moveTo(p1[0], p1[1]);
-    ctx.lineTo(p2[0], p2[1]);
-    ctx.stroke();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    Cy += 0.01;
+    Cz -= 0.005;
+    Cx -= 0.01;
+    project_and_render();
 
+}, 10);
 
-}
