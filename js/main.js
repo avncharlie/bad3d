@@ -45,14 +45,14 @@ let edges = [
 ];
 
 // define camera position (faces -y)
-let Cx = 1.5;
-let Cy = 1.5;
-let Cz = 1.5;
+let Cx = 3;
+let Cy = 15;
+let Cz = 3;
 let camera_position = [Cx, Cy, Cz];
 let camera_distance = 1;
 
 // define output scaling
-let scale = 200;
+let scale = 2000;
 
 function project_and_render() {
     // calculate projection
@@ -103,8 +103,8 @@ function project_and_render() {
 setInterval(function () {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    Cy += 0.01;
-    Cz -= 0.005;
+    Cy += 0.03;
+    Cz -= 0.01;
     Cx -= 0.01;
     project_and_render();
 
