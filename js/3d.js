@@ -10,13 +10,15 @@
 //   Mesh
 //   Camera
 //   WorldObject
+// Constants:
+//   KEYFRAME_FUNCTIONS
 
 /*
  * Set of functions used for keyframing. All functions take progress as value
  * between 0 to 1 as input and output value between 0 and 1. functions should
  * pass through (0,0) and (1,1).
  */
-const keyframe_functions = {
+const KEYFRAME_FUNCTIONS = {
     linear: function(progress) {
         return progress;
     }
@@ -506,6 +508,8 @@ World.prototype.render = function() {
     // orient world to camera view 
     let oriented_mesh = this.orient_to_camera_view(world_mesh);
 
+    //dbg_world_mesh = world_mesh.clone()
+
     // project 
     let projected_points = this.project(oriented_mesh);
 
@@ -518,138 +522,9 @@ World.prototype.render = function() {
  * 3d framework end
  */
 
-// get canvas and size to window
-let canvas = document.getElementById('outCanvas');
-let ctx = canvas.getContext('2d');
-ctx.canvas.width  = window.innerWidth;
-ctx.canvas.height = window.innerHeight;
-
-// define axis
-let axis_length = 3;
-let axis = new WorldObject({
-    mesh: new Mesh({
-        vertices: [
-            new Vertex(0, 0, 0),
-            new Vertex(axis_length, 0, 0),
-            new Vertex(0, axis_length, 0),
-            new Vertex(0, 0, axis_length),
-        ],
-        edges: [
-            [0, 1],
-            [0, 2],
-            [0, 3],
-        ],
-        faces: []
-    }),
-    position: new Coord(0, 0, 0),
-    rotation: new Rotation(0, 0, 0),
-});
-
-// cube mesh
-let cube_mesh = (new Mesh({
-    vertices: [
-        new Vertex(0, 0, 0),
-        new Vertex(1, 0, 0),
-        new Vertex(0, 1, 0),
-        new Vertex(0, 0, 1),
-        new Vertex(1, 1, 0),
-        new Vertex(1, 0, 1),
-        new Vertex(0, 1, 1),
-        new Vertex(1, 1, 1),
-    ],
-    edges: [
-        [0, 1],
-        [0, 2],
-        [0, 3],
-        [6, 3],
-        [6, 2],
-        [6, 7],
-        [5, 1],
-        [5, 3],
-        [5, 7],
-        [4, 2],
-        [4, 1],
-        [4, 7],
-    ],
-    faces: []
-})).translate(new Vector(-0.5, -0.5, -0.5));
-
-
-// cube object in world 
-let cube = new WorldObject({
-    mesh: cube_mesh,
-    position: new Coord(1, 1, 1),
-    rotation: new Rotation( 
-        Rotation.to_radians(0), // x rot
-        Rotation.to_radians(0), // y rot
-        Rotation.to_radians(0), // z rot
-    ),
-})
-
-// triangle 
-let triangle = new WorldObject({
-    mesh: new Mesh({
-        vertices: [
-            new Vertex(0, 0, 0),
-            new Vertex(1, 0, 0),
-            new Vertex(0, 0, 1),
-        ],
-        edges: [
-            [0, 1],
-            [1, 2],
-            [2, 0],
-        ],
-        faces: []
-    }),
-    position: new Coord(0, 0, 0),
-    rotation: new Rotation(0, 0, 0)
-})
-
-let yC = new Coord(0, 5, 0)
-let xC = new Coord(5, 0, 0)
-let zC = new Coord(0, 0, 5)
-
-let oC = new Coord(1.5, 5, 1.5)
-
-// camera config
-let camera = new Camera({
-    position: new Coord(0, 5, 0),
-    rotation: new Rotation( 
-        Rotation.to_radians(0), // x rot
-        Rotation.to_radians(0), // y rot
-        Rotation.to_radians(0), // z rot
-    ),
-    distance: 1,
-    scale: 500
-});
-// using look_at will overwrite existing rotation
-camera.look_at(new Coord(0, 0, 0)); 
-
-let line = new WorldObject({
-    mesh: new Mesh({
-        vertices: [
-            new Vertex(0, 0, 0),
-            new Vertex(0, 0, 1),
-        ],
-        edges: [
-            [0, 1],
-        ],
-        faces: []
-    }),
-    position: new Coord(0, 0, 0),
-    rotation: new Rotation(0, 0, 0)
-});
-
-
-// create world
-let world = new World({
-    objects: [axis, cube],
-    camera: camera,
-    canvas_ctx: ctx
-});
-
-world.render();
-
+/*
+ * keypress to move camera
+ */
 window.addEventListener('keypress', function(event) {
     if (event.code == 'KeyD') {
         rotate_camera(
@@ -676,16 +551,12 @@ window.addEventListener('keypress', function(event) {
             camera.position.clone()
         );
     }
-
-    //console.log(camera.position, camera.rotation);
 });
 
 
 /*
  * implement draggable camera
  */
-
-
 window.addEventListener("wheel", function(e) {
     var dir = Math.sign(e.deltaY);
     let amt = 20;
@@ -762,13 +633,3 @@ function handle_camera_drag(diff_x, diff_y) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     world.render();
 }
-
-setInterval(function () {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    world.render();
-
-    cube.rotation.Rx += 0.02;
-    cube.rotation.Rz += 0.02;
-    cube.rotation.Ry += 0.02;
-
-}, 10); 
