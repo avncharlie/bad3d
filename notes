@@ -1,72 +1,7 @@
 todo:
 
-camera rotations are scuffed: try again
+fill in worldObject translation rotation and animation functions
 
-refactor (diff files etc)
+faces
 
-merge
-
-materials / colors on mesh
-
-
---------------------------------------------------------------------------
-point:
-    x, y, z 
-    maybe rotate method?
-
-renderInfo:
-    color: color value
-
-mesh:
-    vertices (array of [points, renderInfo])
-    edges (array of [[pointIndex, pointIndex], renderInfo])
-    faces (array of [[pointIndex, ..., pointIndex], renderInfo])
-
-    model is defined with center being 0,0
-
-Camera:
-    position
-    distance
-    angles
-    scale
-    method lookingAt:
-        will set angles to look at wherever specified
-
-3dObject:
-    mesh 
-    attributes (directly used by renderer):
-        position
-        rotation
-        scale
-
-    keyframe functions:
-        <list of funcs created to pass through (0,0) and (1,1)>
-
-    keyframe(attribute, endVal, time, keyframe function)
-        will change attribute value as such over time with keyframe function
-
-Object.applyAttribute / applyKeyframe(objects)
-
-Scene:
-    mesh (scene)
-    objects = array of objects
-    Camera
-    canvas ctx
-
-    Mesh can be imported to scene and Object returned
-
-    methods:
-        set objects:
-            add objects to scene according to their attributes
-            (start from empty world and add objects in 1 by 1)
-            
-        camera view: returns scene oriented to camera
-
-        project: calculates projection and returns
-
-        render: (renders to canvas)
-            call set objects
-            call camera view
-            call project
-            render projection to canvas
-
+materials

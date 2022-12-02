@@ -17,11 +17,40 @@
  * Set of functions used for keyframing. All functions take progress as value
  * between 0 to 1 as input and output value between 0 and 1. functions should
  * pass through (0,0) and (1,1).
+ * See https://easings.net/ for visualisations of below easings
  */
 const KEYFRAME_FUNCTIONS = {
-    linear: function(progress) {
-        return progress;
+    linear: function(p) {
+        return p;
+    },
+    ease_out_sin: function(p) {
+        return Math.sin((Math.PI * p)/2);
+    },
+    ease_in_sin: function(p) {
+        return Math.sin( (Math.PI*(p-1))/2 ) + 1;
+    },
+    ease_in_out_sin: function(p) {
+        return (Math.sin( (Math.PI*(2*p - 1))/2  ) + 1) / 2;
+    },
+    ease_in_quadratic: function(p) {
+        return p**2;
+    },
+    ease_out_quadratic: function(p) {
+        return -1*(p-1)**2 + 1;
+    },
+    ease_in_cubic: function(p) {
+        return p**3;
+    },
+    ease_out_cubic: function(p) {
+        return (p-1)**3+1;
+    },
+    ease_in_out_cubic: function(p) {
+        if (p < 0.5) {
+            return 4*p**3;
+        } 
+        return ((2*p-2)**3+2)/2;
     }
+
 }
 
 function Coord(x, y, z) {
@@ -36,8 +65,16 @@ Coord.prototype.add_vector = function(vector) {
     this.z += vector.z;
 }
 
+Coord.prototype.add_vector_and_return = function(vector) {
+    return new Vector(
+        this.x + vector.x,
+        this.y + vector.y,
+        this.z + vector.z,
+    )
+}
+
 Coord.prototype.subtract = function(coord) {
-    return new Vector (
+    return new Vector(
         this.x - coord.x,
         this.y - coord.y,
         this.z - coord.z
@@ -72,6 +109,14 @@ function Vector(x, y, z) {
     Coord.call(this, x, y, z);
 }
 
+Vector.prototype.multiply = function(m) {
+    return new Vector(
+        this.x * m,
+        this.y * m,
+        this.z * m,
+    )
+}
+
 function Rotation(Rx, Ry, Rz) {
     /*
      * Stores rotation. 
@@ -83,6 +128,14 @@ function Rotation(Rx, Ry, Rz) {
     this.Rx = Rx;
     this.Ry = Ry;
     this.Rz = Rz;
+}
+
+Rotation.prototype.multiply = function(m) {
+    return new Rotation(
+        this.Rx * m,
+        this.Ry * m,
+        this.Rz * m,
+    )
 }
 
 Rotation.prototype.clone = function() {
@@ -413,6 +466,14 @@ function WorldObject(args) {
     this.rotation = args.rotation;
 }
 
+WorldObject.prototype.clone = function() {
+    return new WorldObject({
+        mesh: this.mesh.clone(),
+        position: this.position.clone(),
+        rotation: this.rotation.clone()
+    });
+}
+
 WorldObject.prototype.rotate = function(rotation, origin) {
     /*
      * Rotate object around point
@@ -420,6 +481,12 @@ WorldObject.prototype.rotate = function(rotation, origin) {
      *   rotation: Rotation object defining rotation
      *   origin: Coord object that will be origin of rotation
      */
+    let move_to_origin = (new Coord(0,0,0)).subtract(origin);
+    let move_back = move_to_origin.multiply(-1)
+
+    this.rotation = rotation;
+    this.position = rotation.apply_rotation(this.position.add_vector_and_return(move_to_origin))
+        .add_vector_and_return(move_back);
 }
 
 WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe_func) {
@@ -431,6 +498,38 @@ WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe
      *   time: total animation time
      *   kframe_func: name of function in `keyframe_functions` to animate with
      */
+
+    let start_pos = this.position.clone();
+
+    let move_to_origin = (new Coord(0,0,0)).subtract(origin);
+    let move_back = move_to_origin.multiply(-1)
+
+    let interval = 10;
+    let max_count = time/10;
+
+    let count = 0
+
+    let obj = this;
+    let tween = setInterval(function() {
+        count++
+        if (count == max_count) {
+            clearInterval(tween);
+        }
+
+        // percentage of animation completed
+        let perc = count/max_count;
+
+        // pass to keyframe function to modify as appropriate
+        perc = kframe_func(perc);
+
+        // rotate as required
+        let curr_rot = rotation.multiply(perc);
+
+        obj.rotation = curr_rot;
+        obj.position = curr_rot.apply_rotation(start_pos.add_vector_and_return(move_to_origin)).add_vector_and_return(move_back);
+
+    }, interval)
+
 }
 
 WorldObject.prototype.translate = function(vector) {
@@ -450,6 +549,30 @@ WorldObject.prototype.animate_translation = function(vector, time, kframe_func) 
      *   time: total animation time
      *   kframe_func: name of function in `keyframe_functions` to animate with
      */
+    let start_pos = this.position.clone();
+
+    let interval = 10;
+    let max_count = time/10;
+
+    let count = 0
+
+    let obj = this;
+    let tween = setInterval(function() {
+        count++
+        if (count == max_count) {
+            clearInterval(tween);
+        }
+
+        // percentage of animation completed
+        let perc = count/max_count;
+
+        // pass to keyframe function to modify as appropriate
+        perc = kframe_func(perc);
+
+        // translate as required
+        obj.position = start_pos.add_vector_and_return(vector.multiply(perc));
+
+    }, interval)
 }
 
 /*
@@ -628,7 +751,17 @@ World.prototype.draw = function(projected_points, mesh) {
 
 }
 
-World.prototype.render = function() {
+World.prototype.render = function(args) {
+    /*
+     * Render world to canvas
+     * Parameters:
+     *   clear_screen: true if canvas should be cleared before rendering
+     */
+
+    if (args.clear_screen == true) {
+        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
     let world_mesh = new Mesh({
         vertices: [],
         edges: [],
