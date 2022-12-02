@@ -629,7 +629,4 @@ function handle_camera_drag(diff_x, diff_y) {
     let y_degrees = Rotation.to_radians(full_degrees * perc_x);
 
     rotate_camera(x_degrees, y_degrees, cam_start_pos);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    world.render();
 }

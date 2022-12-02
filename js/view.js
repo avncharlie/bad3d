@@ -151,8 +151,18 @@ let cube = new WorldObject({
 })
 world.objects.push(cube);
 
-// render!
-world.render();
+// render
+function display() {
+
+    cube.rotation.Rx += 0.02;
+    cube.rotation.Rz += 0.02;
+    cube.rotation.Ry += 0.02;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    world.render();
+    requestAnimationFrame(display);
+}
+display();
 
 //setInterval(function () {
 //    ctx.clearRect(0, 0, canvas.width, canvas.height);
