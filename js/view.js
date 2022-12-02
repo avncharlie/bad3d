@@ -115,7 +115,7 @@ let ctx = canvas.getContext('2d');
 ctx.canvas.width  = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
 
-// set up camera
+// set up camera in scene
 let camera = new Camera({
     position: new Coord(3, 3, 3),
     rotation: new Rotation(0, 0, 0),
@@ -123,6 +123,19 @@ let camera = new Camera({
     scale: 500
 });
 camera.look_at(new Coord(0, 0, 0)); 
+
+// set up camera interactivity
+camera.set_draggable({
+    element: window,
+    drag_degrees: Rotation.to_radians(400)
+});
+camera.set_scrollable({
+    element: window,
+    scroll_amount: 20
+});
+camera.set_WASD_controls({
+    angle: Rotation.to_radians(5)
+});
 
 // create world
 let world = new World({
@@ -143,17 +156,13 @@ world.objects.push(axis);
 let cube = new WorldObject({
     mesh: MESH.cube(1),
     position: new Coord(1, 1, 1),
-    rotation: new Rotation(
-        Rotation.to_radians(0), // x rot
-        Rotation.to_radians(0), // y rot
-        Rotation.to_radians(45), // z rot
-    ),
+    rotation: new Rotation(0, 0, 0),
 })
 world.objects.push(cube);
 
 // render
 function display() {
-
+    // animaton
     cube.rotation.Rx += 0.02;
     cube.rotation.Rz += 0.02;
     cube.rotation.Ry += 0.02;
@@ -163,13 +172,3 @@ function display() {
     requestAnimationFrame(display);
 }
 display();
-
-//setInterval(function () {
-//    ctx.clearRect(0, 0, canvas.width, canvas.height);
-//    world.render();
-//
-//    cube.rotation.Rx += 0.02;
-//    cube.rotation.Rz += 0.02;
-//    cube.rotation.Ry += 0.02;
-//
-//}, 10); 

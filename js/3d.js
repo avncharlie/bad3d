@@ -265,6 +265,141 @@ Camera.prototype.look_at = function(looking_at) {
     this.rotation.calculate_rotation_looking_at(this.position, looking_at);
 }
 
+Camera.prototype.rotate_camera = function(x_degrees, y_degrees, start_pos) {
+    /*
+     * Rotate camera around origin, given horizontal and vertical angles of
+     * movement. Essentially implements a 3d arcball.
+     * Parameters:
+     *   x_degrees: hoizontal #degrees to move camera around origin
+     *   y_degrees: vertical #degrees to move camera around origin
+     *   start_pos [optional]: start camera position to apply rotation from
+     */
+
+    let spos = start_pos;
+    if (start_pos === undefined) {
+        spos = this.position; 
+    }
+
+    let total = (this.position.y**2 + this.position.x**2) ** (1/2);
+    let x_ratio = this.position.y/total;
+    let y_ratio = this.position.x/total;
+
+    let rot = new Rotation(x_ratio*x_degrees, -y_ratio*x_degrees, y_degrees);
+
+    camera.position = rot.apply_rotation(spos)
+    camera.look_at(new Coord(0, 0, 0)); 
+}
+
+Camera.prototype.set_draggable = function(args) {
+    /*
+     * Allows camera to be dragged around origin
+     * Parameter:
+     *   element: element to register drag and touch event handlers on
+     *   drag_degrees: degrees to rotate camera around on drag 
+     */
+
+    let cam = this;
+
+    let elem = args.element;
+    let full_degrees = args.drag_degrees;
+
+    let mouse_start_x;
+    let mouse_start_y;
+    let cam_start_pos;
+
+    function handle_camera_drag(diff_x, diff_y) {
+        let perc_y = -(diff_y/window.innerHeight);
+        let perc_x = -(diff_x/window.innerWidth);
+
+        let x_degrees = full_degrees * perc_y;
+        let y_degrees = full_degrees * perc_x;
+
+        cam.rotate_camera(x_degrees, y_degrees, cam_start_pos);
+    }
+
+    // set up draggable camera through touches (mobile devices)
+    elem.addEventListener('touchstart', function (event) {
+        let touch = event.changedTouches[0];
+        mouse_start_x = touch.pageX
+        mouse_start_y = touch.pageY
+        cam_start_pos = cam.position.clone();
+        elem.addEventListener('touchmove', onTouchMove);
+    });
+
+    function onTouchMove(event) {
+        let touch = event.changedTouches[0];
+        const diff_x = touch.pageX - mouse_start_x;
+        const diff_y = touch.pageY - mouse_start_y;
+        handle_camera_drag(diff_x, diff_y);
+    }
+
+    // set up draggable camera mouse drags (computers)
+    elem.addEventListener('mousedown', function (event) {
+        mouse_start_x = event.pageX;
+        mouse_start_y = event.pageY;
+        cam_start_pos = cam.position.clone();
+        elem.addEventListener('mousemove', onMouseMove);
+    });
+
+    function onMouseMove(event) {
+        const diff_x = event.pageX - mouse_start_x;
+        const diff_y = event.pageY - mouse_start_y;
+        handle_camera_drag(diff_x, diff_y);
+    }
+
+    elem.addEventListener('mouseup', function (event) {
+        onMouseMove(event);
+        elem.removeEventListener('mousemove', onMouseMove);
+    });
+
+}
+
+Camera.prototype.set_scrollable = function(args) {
+    /*
+     * Enables scrolling to zoom scene
+     * Allows camera to be dragged around origin
+     * Parameter:
+     *   element: element to register scroll event handler on
+     *   scroll_amount: amount to increase/decrease camera scale per scroll 
+     */
+
+    let elem = args.element;
+    let scroll_amount = args.scroll_amount;
+
+    elem.addEventListener("wheel", function(e) {
+        var dir = Math.sign(e.deltaY);
+        if (dir == 1) {
+            camera.scale += scroll_amount;
+        } else {
+            camera.scale -= scroll_amount;
+        }
+    });
+}
+
+Camera.prototype.set_WASD_controls = function(args) {
+    /*
+     * Enable camera movement through WASD keys
+     * Parameters:
+     *   angle: angle camera moves per key press
+     */
+
+    let angle = args.angle;
+    let cam = this;
+
+    window.addEventListener('keypress', function(event) {
+        let orig_pos = cam.position.clone();
+        if (event.code == 'KeyD') {
+            cam.rotate_camera(0, -angle);
+        } else if (event.code == 'KeyA') {
+            cam.rotate_camera(0, angle);
+        } else if (event.code == 'KeyW') {
+            cam.rotate_camera(angle, 0);
+        } else if (event.code == 'KeyS') {
+            cam.rotate_camera(-angle, 0);
+        }
+    });
+}
+
 function WorldObject(args) {
     /*
      * Defines object in world
@@ -515,118 +650,4 @@ World.prototype.render = function() {
 
     // drawn
     this.draw(projected_points, world_mesh);
-}
-
-
-/*
- * 3d framework end
- */
-
-/*
- * keypress to move camera
- */
-window.addEventListener('keypress', function(event) {
-    if (event.code == 'KeyD') {
-        rotate_camera(
-            Rotation.to_radians(0),
-            Rotation.to_radians(-5),
-            camera.position.clone()
-        );
-    } else if (event.code == 'KeyA') {
-        rotate_camera(
-            Rotation.to_radians(0),
-            Rotation.to_radians(5),
-            camera.position.clone()
-        );
-    } else if (event.code == 'KeyW') {
-        rotate_camera(
-            Rotation.to_radians(5),
-            Rotation.to_radians(0),
-            camera.position.clone()
-        );
-    } else if (event.code == 'KeyS') {
-        rotate_camera(
-            Rotation.to_radians(-5),
-            Rotation.to_radians(0),
-            camera.position.clone()
-        );
-    }
-});
-
-
-/*
- * implement draggable camera
- */
-window.addEventListener("wheel", function(e) {
-    var dir = Math.sign(e.deltaY);
-    let amt = 20;
-    if (dir == 1) {
-        camera.scale += amt;
-    } else {
-        camera.scale -= amt;
-    }
-});
-
-let mouse_start_x;
-let mouse_start_y;
-let cam_start_pos;
-
-window.addEventListener('touchstart', function (event) {
-    let touch = event.changedTouches[0];
-    mouse_start_x = touch.pageX
-    mouse_start_y = touch.pageY
-    cam_start_pos = camera.position.clone();
-    window.addEventListener('touchmove', onTouchMove);
-});
-
-function onTouchMove(event) {
-    let touch = event.changedTouches[0];
-    const diff_x = touch.pageX - mouse_start_x;
-    const diff_y = touch.pageY - mouse_start_y;
-
-    handle_camera_drag(diff_x, diff_y);
-}
-
-window.addEventListener('mousedown', function (event) {
-    mouse_start_x = event.pageX;
-    mouse_start_y = event.pageY;
-    cam_start_pos = camera.position.clone();
-    window.addEventListener('mousemove', onMouseMove);
-});
-
-function onMouseMove(event) {
-    const diff_x = event.pageX - mouse_start_x;
-    const diff_y = event.pageY - mouse_start_y;
-
-    handle_camera_drag(diff_x, diff_y);
-}
-
-window.addEventListener('mouseup', function (event) {
-    onMouseMove(event);
-    window.removeEventListener('mousemove', onMouseMove);
-});
-
-function rotate_camera(x_degrees, y_degrees, start_pos) {
-    let cpos = camera.position.clone();
-    let total = (cpos.y**2 + cpos.x**2) ** (1/2);
-
-    let x_ratio = cpos.y/total;
-    let y_ratio = cpos.x/total;
-
-    let rot = new Rotation(x_ratio*x_degrees, -y_ratio*x_degrees, y_degrees);
-
-    camera.position = rot.apply_rotation(start_pos);
-    camera.look_at(new Coord(0, 0, 0)); 
-}
-
-function handle_camera_drag(diff_x, diff_y) {
-    let full_degrees = 400;
-
-    let perc_y = -(diff_y/ctx.canvas.height);
-    let perc_x = -(diff_x/ctx.canvas.width);
-
-    let x_degrees = Rotation.to_radians(full_degrees * perc_y);
-    let y_degrees = Rotation.to_radians(full_degrees * perc_x);
-
-    rotate_camera(x_degrees, y_degrees, cam_start_pos);
 }
