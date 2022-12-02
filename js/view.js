@@ -155,20 +155,37 @@ world.objects.push(axis);
 // add cube to world
 let cube = new WorldObject({
     mesh: MESH.cube(1),
-    position: new Coord(1, 1, 1),
+    position: new Coord(0, 0, 0),
     rotation: new Rotation(0, 0, 0),
 })
-world.objects.push(cube);
+let cube2 = cube.clone()
+world.objects.push(cube, cube2);
 
 // render
 function display() {
     // animaton
-    cube.rotation.Rx += 0.02;
-    cube.rotation.Rz += 0.02;
-    cube.rotation.Ry += 0.02;
+    //cube.rotation.Rx += 0.02;
+    //cube.rotation.Rz += 0.02;
+    //cube.rotation.Ry += 0.02;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    world.render();
+    world.render({clear_screen: true});
     requestAnimationFrame(display);
 }
 display();
+
+////////////////
+
+cube.translate(new Vector(1, 1, 1));
+
+WorldObject.animate_object_rotations(
+    [cube, cube2],
+    new Rotation(
+        Rotation.to_radians(360),
+        Rotation.to_radians(0),
+        Rotation.to_radians(0),
+    ),
+    new Coord(0, 0, 0),
+    5000,
+    KEYFRAME_FUNCTIONS.ease_in_out_cubic
+)
+
