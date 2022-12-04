@@ -59,6 +59,16 @@ function Coord(x, y, z) {
     this.z = z;
 }
 
+Coord.prototype.scale = function(scale) {
+    this.x *= scale;
+    this.y *= scale;
+    this.z *= scale;
+}
+
+Coord.prototype.add = function(thing) {
+    this.add_vector(thing);
+}
+
 Coord.prototype.add_vector = function(vector) {
     this.x += vector.x;
     this.y += vector.y;
@@ -79,6 +89,11 @@ Coord.prototype.subtract = function(coord) {
         this.y - coord.y,
         this.z - coord.z
     );
+}
+
+Coord.prototype.zero_distance = function() {
+    let dist = Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
+    return dist;
 }
 
 Coord.prototype.clone = function() {
@@ -671,7 +686,7 @@ World.place_object_in_mesh = function(mesh, object) {
         for (let y = 0; y < face.length; y++) {
             face[y] += offset;
         }
-        mesh.faces.push(faces);
+        mesh.faces.push(face);
     }
 
     return mesh;
@@ -727,28 +742,75 @@ World.prototype.project = function(mesh) {
 
 World.prototype.draw = function(projected_points, mesh) {
     /*
-     * Draw projection on screen
+     * Draw projection on screen using painter's algorithm
      */
 
-    // draw points
+    // draw points (will get painted over by everything)
     for (let p = 0; p < projected_points.length; p++) {
         let final_x = projected_points[p][0];
         let final_y = projected_points[p][1];
+        this.ctx.fillStyle = 'black';
         this.ctx.fillRect(final_x-1, final_y-1, 2, 2);
     }
 
-    // draw edges
-    for (let e = 0; e < mesh.edges.length; e++) {
-        let p1 = projected_points[mesh.edges[e][0]];
-        let p2 = projected_points[mesh.edges[e][1]];
+    // first sort edges and faces by depth
+    let sorted = mesh.edges.concat(mesh.faces);
 
-        // set line stroke and line width
-        this.ctx.beginPath();
-        this.ctx.moveTo(p1[0], p1[1]);
-        this.ctx.lineTo(p2[0], p2[1]);
-        this.ctx.stroke();
+    sorted.sort(function(thing1, thing2) {
+        let thing1_depth = new Coord(0, 0, 0)
+        for (let v = 0; v < thing1.length; v++) {
+            thing1_depth.add(mesh.vertices[thing1[v]]);
+        }
+        thing1_depth.scale(1 / thing1.length);
+
+        let thing2_depth = new Coord(0, 0, 0)
+        for (let v = 0; v < thing2.length; v++) {
+            thing2_depth.add(mesh.vertices[thing2[v]]);
+        }
+        thing2_depth.scale(1 / thing2.length);
+
+        return thing2_depth.zero_distance() - thing1_depth.zero_distance();
+    })
+
+    // next draw edges and faces in depth order from furthest to nearest
+    for (let x = 0; x < sorted.length; x++) {
+        if (sorted[x].length > 2) {
+            // more than two elements; must be a face
+            let face = sorted[x];
+
+            this.ctx.beginPath();
+
+            for (let p = 0; p < face.length; p++) {
+                let proj_point = projected_points[face[p]];
+                let world_point = mesh.vertices[face[p]];
+
+                if (p == 0) {
+                    this.ctx.moveTo(proj_point[0], proj_point[1]);
+                } else {
+                    this.ctx.lineTo(proj_point[0], proj_point[1]);
+                }
+            }
+            this.ctx.closePath();
+
+            let colour = (255/sorted.length)*x;
+            let fillStyle = 'rgb(' + colour + ', ' + colour + ', ' + colour + ')';
+            fillStyle = 'yellow';
+            this.ctx.fillStyle = fillStyle;
+
+            this.ctx.fill();
+            this.ctx.stroke();
+        } else {
+            // only lines have 2 elements
+            let edge = sorted[x];
+            let p1 = projected_points[edge[0]];
+            let p2 = projected_points[edge[1]];
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(p1[0], p1[1]);
+            this.ctx.lineTo(p2[0], p2[1]);
+            this.ctx.stroke();
+        }
     }
-
 }
 
 World.prototype.render = function(args) {

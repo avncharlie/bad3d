@@ -53,14 +53,14 @@ const MESH = {
     cube: function(s) {
         return (new Mesh({
             vertices: [
-                new Vertex(0, 0, 0),
-                new Vertex(s, 0, 0),
-                new Vertex(0, s, 0),
-                new Vertex(0, 0, s),
-                new Vertex(s, s, 0),
-                new Vertex(s, 0, s),
-                new Vertex(0, s, s),
-                new Vertex(s, s, s),
+                new Vertex(0, 0, 0), // 0, 0 0 0 
+                new Vertex(s, 0, 0), // 1, x 0 0 
+                new Vertex(0, s, 0), // 2, 0 y 0
+                new Vertex(0, 0, s), // 3, 0 0 z
+                new Vertex(s, s, 0), // 4, x y 0
+                new Vertex(s, 0, s), // 5, x 0 z
+                new Vertex(0, s, s), // 6, 0 y z
+                new Vertex(s, s, s), // 7, x y z
             ],
             edges: [
                 [0, 1],
@@ -76,7 +76,15 @@ const MESH = {
                 [4, 1],
                 [4, 7],
             ],
-            faces: []
+            faces: [
+                [0, 1, 5, 3],
+                [0, 3, 6, 2],
+                [0, 1, 4, 2], //bottom
+
+                [3, 5, 7, 6], //top
+                [2, 4, 7, 6],
+                [1, 5, 7, 4]
+            ]
         })).translate(new Vector(-s/2, -s/2, -s/2));
     },
     triangle: function(s) {
@@ -117,7 +125,7 @@ ctx.canvas.height = window.innerHeight;
 
 // set up camera in scene
 let camera = new Camera({
-    position: new Coord(3, 3, 3),
+    position: new Coord(4, -4, 4),
     rotation: new Rotation(0, 0, 0),
     distance: 1,
     scale: 500
@@ -158,8 +166,11 @@ let cube = new WorldObject({
     position: new Coord(0, 0, 0),
     rotation: new Rotation(0, 0, 0),
 })
+world.objects.push(cube);
+
 let cube2 = cube.clone()
-world.objects.push(cube, cube2);
+world.objects.push(cube2);
+cube2.translate(new Vector(1, 1, 1));
 
 // render
 function display() {
@@ -173,19 +184,24 @@ function display() {
 }
 display();
 
+//world.render({clear_screen: true});
+
 ////////////////
 
-cube.translate(new Vector(1, 1, 1));
+//cube.translate(new Vector(1, 1, 1));
+
+//cube.animate_translation(new Vector(3, 0, 0), 3000, KEYFRAME_FUNCTIONS.ease_in_out_cubic);
+
+WorldObject.translate_objects([cube, cube2], new Vector(1, 1, 1));
 
 WorldObject.animate_object_rotations(
     [cube, cube2],
     new Rotation(
-        Rotation.to_radians(360),
         Rotation.to_radians(0),
         Rotation.to_radians(0),
+        Rotation.to_radians(-360*2),
     ),
     new Coord(0, 0, 0),
     5000,
     KEYFRAME_FUNCTIONS.ease_in_out_cubic
-)
-
+);
