@@ -59,6 +59,10 @@ function Coord(x, y, z) {
     this.z = z;
 }
 
+Coord.prototype.add = function(thing) {
+    this.add_vector(thing);
+}
+
 Coord.prototype.add_vector = function(vector) {
     this.x += vector.x;
     this.y += vector.y;
@@ -79,6 +83,11 @@ Coord.prototype.subtract = function(coord) {
         this.y - coord.y,
         this.z - coord.z
     );
+}
+
+Coord.prototype.zero_distance = function() {
+    let dist = Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
+    return dist;
 }
 
 Coord.prototype.clone = function() {
@@ -671,7 +680,7 @@ World.place_object_in_mesh = function(mesh, object) {
         for (let y = 0; y < face.length; y++) {
             face[y] += offset;
         }
-        mesh.faces.push(faces);
+        mesh.faces.push(face);
     }
 
     return mesh;
@@ -746,6 +755,61 @@ World.prototype.draw = function(projected_points, mesh) {
         this.ctx.beginPath();
         this.ctx.moveTo(p1[0], p1[1]);
         this.ctx.lineTo(p2[0], p2[1]);
+        this.ctx.stroke();
+    }
+
+    // faces are drawn usiing painters algorithm
+
+    // 1. sort faces by distance to camera
+    mesh.faces.sort(function(face1, face2) {
+        let face1_depth = new Coord(0, 0, 0)
+        for (let v = 0; v < face1.length; v++) {
+            face1_depth.add(mesh.vertices[face1[v]]);
+        }
+        face1_depth = new Coord(
+            face1_depth.x / face1.length,
+            face1_depth.y / face1.length,
+            face1_depth.z / face1.length,
+        )
+
+        let face2_depth = new Coord(0, 0, 0)
+        for (let v = 0; v < face2.length; v++) {
+            face2_depth.add(mesh.vertices[face2[v]]);
+        }
+        face2_depth = new Coord(
+            face2_depth.x / face2.length,
+            face2_depth.y / face2.length,
+            face2_depth.z / face2.length,
+        )
+
+        return face2_depth.zero_distance() - face1_depth.zero_distance();
+    })
+
+    // 2. draw faces from most distant to least distant
+    for (let f = 0; f < mesh.faces.length; f++) {
+        let face = mesh.faces[f];
+
+        this.ctx.beginPath();
+
+        for (let p = 0; p < face.length; p++) {
+            let proj_point = projected_points[face[p]];
+            let world_point = mesh.vertices[face[p]];
+
+            if (p == 0) {
+                this.ctx.moveTo(proj_point[0], proj_point[1]);
+            } else {
+                this.ctx.lineTo(proj_point[0], proj_point[1]);
+            }
+        }
+        this.ctx.closePath();
+
+        let colour = (255/mesh.faces.length)*f;
+        let fillStyle = 'rgb(' + colour + ', ' + colour + ', ' + colour + ')';
+        //fillStyle = 'yellow';
+        this.ctx.fillStyle = fillStyle;
+
+
+        this.ctx.fill();
         this.ctx.stroke();
     }
 
