@@ -125,7 +125,7 @@ ctx.canvas.height = window.innerHeight;
 
 // set up camera in scene
 let camera = new Camera({
-    position: new Coord(4, -4, 4),
+    position: new Coord(5, 5, 5),
     rotation: new Rotation(0, 0, 0),
     distance: 1,
     scale: 500
@@ -139,7 +139,7 @@ camera.set_draggable({
 });
 camera.set_scrollable({
     element: window,
-    scroll_amount: 20
+    scroll_amount: 40
 });
 camera.set_WASD_controls({
     angle: Rotation.to_radians(5)
@@ -166,11 +166,7 @@ let cube = new WorldObject({
     position: new Coord(0, 0, 0),
     rotation: new Rotation(0, 0, 0),
 })
-world.objects.push(cube);
-
-let cube2 = cube.clone()
-world.objects.push(cube2);
-cube2.translate(new Vector(1, 1, 1));
+//world.objects.push(cube);
 
 // render
 function display() {
@@ -186,22 +182,32 @@ display();
 
 //world.render({clear_screen: true});
 
-////////////////
+// animation stuff:
 
 //cube.translate(new Vector(1, 1, 1));
-
 //cube.animate_translation(new Vector(3, 0, 0), 3000, KEYFRAME_FUNCTIONS.ease_in_out_cubic);
+//WorldObject.translate_objects([cube, cube2], new Vector(1, 1, 1));
+//WorldObject.animate_object_rotations(
+//    [cube, cube2],
+//    new Rotation(
+//        Rotation.to_radians(0),
+//        Rotation.to_radians(0),
+//        Rotation.to_radians(-360*2),
+//    ),
+//    new Coord(0, 0, 0),
+//    5000,
+//    KEYFRAME_FUNCTIONS.ease_in_out_cubic
+//);
 
-WorldObject.translate_objects([cube, cube2], new Vector(1, 1, 1));
+// loading obj:
 
-WorldObject.animate_object_rotations(
-    [cube, cube2],
-    new Rotation(
-        Rotation.to_radians(0),
-        Rotation.to_radians(0),
-        Rotation.to_radians(-360*2),
-    ),
-    new Coord(0, 0, 0),
-    5000,
-    KEYFRAME_FUNCTIONS.ease_in_out_cubic
-);
+Mesh.load_obj_file('../obj/monke.obj', handle_obj);
+function handle_obj(obj_mesh) {
+    loaded_obj = new WorldObject({
+        mesh: obj_mesh,
+        position: new Coord(0, 0, 0),
+        rotation: new Rotation(0, 0, 0),
+    });
+
+    world.objects.push(loaded_obj);
+}
