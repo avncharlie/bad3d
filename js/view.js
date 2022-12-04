@@ -125,7 +125,7 @@ ctx.canvas.height = window.innerHeight;
 
 // set up camera in scene
 let camera = new Camera({
-    position: new Coord(3, 3, 3),
+    position: new Coord(4, -4, 4),
     rotation: new Rotation(0, 0, 0),
     distance: 1,
     scale: 500
@@ -192,14 +192,16 @@ display();
 
 //cube.animate_translation(new Vector(3, 0, 0), 3000, KEYFRAME_FUNCTIONS.ease_in_out_cubic);
 
+WorldObject.translate_objects([cube, cube2], new Vector(1, 1, 1));
+
 WorldObject.animate_object_rotations(
     [cube, cube2],
     new Rotation(
         Rotation.to_radians(0),
-        Rotation.to_radians(360*4),
         Rotation.to_radians(0),
+        Rotation.to_radians(-360*2),
     ),
     new Coord(0, 0, 0),
     5000,
-    KEYFRAME_FUNCTIONS.ease_in_out_sin
+    KEYFRAME_FUNCTIONS.ease_in_out_cubic
 );
