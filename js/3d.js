@@ -268,6 +268,62 @@ function Mesh(args) {
     this.faces = args.faces;
 }
 
+Mesh.load_obj = function(obj, callback) {
+    let obj_mesh = new Mesh({
+        vertices: [],
+        edges: [],
+        faces: []
+    });
+ 
+    obj = obj.split('\n');
+    for (let x = 0; x < obj.length; x++) {
+        let line = obj[x];
+        switch (line.slice(0,2)) {
+            case 'v ':
+                // add vertex
+                let v = line.split(' ').slice(1);
+                obj_mesh.vertices.push(new Vertex(
+                    Number(v[0]),
+                    Number(v[2]),
+                    Number(v[1]),
+                ))
+                break;
+            case 'l ':
+                break;
+            case 'f ':
+                // add face
+
+                let f = line.split(' ').slice(1);
+
+                // remove texture and normal information
+                for (let v = 0; v < f.length; v++) {
+                    // obj files are 1 indexed, make 0 indexed
+                    f[v] = Number(f[v].split("/")[0] - 1);
+                }
+
+                obj_mesh.faces.push(f);
+                break;
+        }
+    }
+
+    callback(obj_mesh);
+}
+
+Mesh.load_obj_file = function(file_path, callback) {
+    /*
+     * Load mesh from obj file. After loading, execute callback(loaded_mesh)
+     * Parameters:
+     *   callback: callback function
+     */
+
+    fetch(file_path)
+        .then(function(response) {
+            return response.text();
+        }).then(function(data) {
+            Mesh.load_obj(data, callback);
+        });
+}
+
 Mesh.prototype.translate = function(vector) {
     /*
      * Translate mesh in place
@@ -749,8 +805,8 @@ World.prototype.draw = function(projected_points, mesh) {
     for (let p = 0; p < projected_points.length; p++) {
         let final_x = projected_points[p][0];
         let final_y = projected_points[p][1];
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillRect(final_x-1, final_y-1, 2, 2);
+        //this.ctx.fillStyle = 'black';
+        //this.ctx.fillRect(final_x-1, final_y-1, 2, 2);
     }
 
     // first sort edges and faces by depth
