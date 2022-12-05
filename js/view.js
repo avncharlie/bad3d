@@ -5,49 +5,21 @@ const MESH = {
         return new Mesh({
             vertices: [
                 new Vertex(0, 0, 0),
-                new Vertex(s-tip_offset, 0, 0),
-                new Vertex(0, s-tip_offset, 0),
-                new Vertex(0, 0, s-tip_offset),
-
-                new Vertex(-width_offset, s-tip_offset, 0),
-                new Vertex(width_offset, s-tip_offset, 0),
-                new Vertex(0, s, 0),
-
-                new Vertex(s-tip_offset, -width_offset, 0),
-                new Vertex(s-tip_offset, width_offset, 0),
                 new Vertex(s, 0, 0),
-
-                new Vertex(-width_offset, 0, s-tip_offset),
-                new Vertex(width_offset, 0, s-tip_offset),
+                new Vertex(0, s, 0),
                 new Vertex(0, 0, s),
-
-                new Vertex(0, -width_offset, s-tip_offset),
-                new Vertex(0, width_offset, s-tip_offset),
-
             ],
             edges: [
                 [0, 1],
                 [0, 2],
                 [0, 3],
-
-                [4, 5],
-                [6, 4],
-                [6, 5],
-
-                [7, 8],
-                [9, 7],
-                [9, 8],
-
-                [10, 11],
-                [12, 10],
-                [12, 11],
-
-                [13, 14],
-                [12, 13],
-                [12, 14],
-
             ],
-            faces: []
+            faces: [],
+            edge_materials: [
+                new EdgeMaterial({ fill_colour: 'red', line_width: 2, }),
+                new EdgeMaterial({ fill_colour: 'blue', line_width: 2, }),
+                new EdgeMaterial({ fill_colour: 'green', line_width: 2, }),
+            ]
         })
     },
     cube: function(s) {
@@ -63,18 +35,18 @@ const MESH = {
                 new Vertex(s, s, s), // 7, x y z
             ],
             edges: [
-                [0, 1],
-                [0, 2],
-                [0, 3],
-                [6, 3],
-                [6, 2],
-                [6, 7],
-                [5, 1],
-                [5, 3],
-                [5, 7],
-                [4, 2],
-                [4, 1],
-                [4, 7],
+                //[0, 1],
+                //[0, 2],
+                //[0, 3],
+                //[6, 3],
+                //[6, 2],
+                //[6, 7],
+                //[5, 1],
+                //[5, 3],
+                //[5, 7],
+                //[4, 2],
+                //[4, 1],
+                //[4, 7],
             ],
             faces: [
                 [0, 1, 5, 3],
@@ -84,7 +56,16 @@ const MESH = {
                 [3, 5, 7, 6], //top
                 [2, 4, 7, 6],
                 [1, 5, 7, 4]
-            ]
+            ],
+            face_materials: [
+                new FaceMaterial({fill_colour: 'red', stroke_edge: true, edge_style: EdgeMaterial.default_edge_material()}),
+                new FaceMaterial({fill_colour: 'yellow', stroke_edge: true, edge_style: EdgeMaterial.default_edge_material()}),
+                new FaceMaterial({fill_colour: 'blue', stroke_edge: true, edge_style: EdgeMaterial.default_edge_material()}),
+
+                new FaceMaterial({fill_colour: 'white', stroke_edge: true, edge_style: EdgeMaterial.default_edge_material()}),
+                new FaceMaterial({fill_colour: 'black', stroke_edge: true, edge_style: EdgeMaterial.default_edge_material()}),
+                new FaceMaterial({fill_colour: 'orange', stroke_edge: true, edge_style: EdgeMaterial.default_edge_material()}),
+            ],
         })).translate(new Vector(-s/2, -s/2, -s/2));
     },
     triangle: function(s) {
@@ -125,7 +106,7 @@ ctx.canvas.height = window.innerHeight;
 
 // set up camera in scene
 let camera = new Camera({
-    position: new Coord(5, 5, 5),
+    position: new Coord(4, 4, 4),
     rotation: new Rotation(0, 0, 0),
     distance: 1,
     scale: 500
@@ -154,7 +135,7 @@ let world = new World({
 
 // add axis to world
 let axis = new WorldObject({
-    mesh: MESH.axis(3),
+    mesh: MESH.axis(5),
     position: new Coord(0, 0, 0),
     rotation: new Rotation(0, 0, 0),
 });
@@ -166,7 +147,11 @@ let cube = new WorldObject({
     position: new Coord(0, 0, 0),
     rotation: new Rotation(0, 0, 0),
 })
-//world.objects.push(cube);
+world.objects.push(cube);
+//
+//let cube2 = cube.clone();
+//world.objects.push(cube2);
+
 
 // render
 function display() {
@@ -184,7 +169,8 @@ display();
 
 // animation stuff:
 
-//cube.translate(new Vector(1, 1, 1));
+cube.translate(new Vector(1.5, 1.5, 1.5));
+
 //cube.animate_translation(new Vector(3, 0, 0), 3000, KEYFRAME_FUNCTIONS.ease_in_out_cubic);
 //WorldObject.translate_objects([cube, cube2], new Vector(1, 1, 1));
 //WorldObject.animate_object_rotations(
@@ -210,4 +196,16 @@ function handle_obj(obj_mesh) {
     });
 
     world.objects.push(loaded_obj);
+
+    WorldObject.animate_object_rotations(
+        [cube, loaded_obj],
+        new Rotation(
+            Rotation.to_radians(0),
+            Rotation.to_radians(0),
+            Rotation.to_radians(360*2),
+        ),
+        new Coord(0, 0, 0),
+        2000,
+        KEYFRAME_FUNCTIONS.ease_in_out_cubic
+    );
 }
