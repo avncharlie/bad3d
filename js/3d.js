@@ -325,13 +325,98 @@ function Mesh(args) {
 
     this.edge_materials = args.edge_materials;
     if (args.edge_materials == undefined) {
-        this.edge_materials = Array(this.edges.length).fill(EdgeMaterial.default_edge_material());
+        let edge_mats = []
+        for (let x = 0; x < this.edges.length; x++) {
+            edge_mats.push(EdgeMaterial.default_edge_material());
+        }
+        this.edge_materials = edge_mats;
     }
     this.face_materials = args.face_materials;
     if (args.face_materials == undefined) {
-        this.face_materials = Array(this.faces.length).fill(FaceMaterial.default_face_material());
+        let face_mats = []
+        for (let x = 0; x < this.faces.length; x++) {
+            face_mats.push(FaceMaterial.default_face_material());
+        }
+        this.face_materials = face_mats;
     }
     //console.log(this, args);
+}
+
+// functions to generate common meshes
+Mesh.meshes = {
+    axis: function(s) {
+        let tip_offset = s/20;
+        let width_offset = s/40;
+        return new Mesh({
+            vertices: [
+                new Vertex(0, 0, 0),
+                new Vertex(s, 0, 0),
+                new Vertex(0, s, 0),
+                new Vertex(0, 0, s),
+            ],
+            edges: [
+                [0, 1],
+                [0, 2],
+                [0, 3],
+            ],
+            faces: [],
+            edge_materials: [
+                new EdgeMaterial({ fill_colour: 'red', line_width: 2, }),
+                new EdgeMaterial({ fill_colour: 'blue', line_width: 2, }),
+                new EdgeMaterial({ fill_colour: 'green', line_width: 2, }),
+            ]
+        })
+    },
+    right_angled_triangle: function(s) {
+        return new Mesh({
+            vertices: [
+                new Vertex(0, 0, 0),
+                new Vertex(s, 0, 0),
+                new Vertex(0, 0, s),
+            ],
+            edges: [
+                [0, 1],
+                [1, 2],
+                [2, 0],
+            ],
+            faces: []
+        });
+    },
+    line: function(v1, v2) {
+        return new Mesh({
+            vertices: [
+                v1,
+                v2,
+            ],
+            edges: [
+                [0, 1],
+            ],
+            faces: []
+        })
+    },
+    cube: function(s) {
+        return (new Mesh({
+            vertices: [
+                new Vertex(0, 0, 0), // 0, 0 0 0 
+                new Vertex(s, 0, 0), // 1, x 0 0 
+                new Vertex(0, s, 0), // 2, 0 y 0
+                new Vertex(0, 0, s), // 3, 0 0 z
+                new Vertex(s, s, 0), // 4, x y 0
+                new Vertex(s, 0, s), // 5, x 0 z
+                new Vertex(0, s, s), // 6, 0 y z
+                new Vertex(s, s, s), // 7, x y z
+            ],
+            edges: [],
+            faces: [
+                [0, 1, 5, 3],
+                [0, 3, 6, 2],
+                [0, 1, 4, 2], //bottom
+                [3, 5, 7, 6], //top
+                [2, 4, 7, 6],
+                [1, 5, 7, 4]
+            ],
+       })).translate(new Vector(-s/2, -s/2, -s/2));
+    },
 }
 
 Mesh.load_obj = function(obj, callback) {
@@ -638,7 +723,7 @@ WorldObject.prototype.rotate = function(rotation, origin) {
         .add_vector_and_return(move_back);
 }
 
-WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe_func) {
+WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe_func, callback) {
     /*
      * Animate object rotation
      * Parameters:
@@ -646,6 +731,7 @@ WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe
      *   origin: Coord object that will be origin of rotation
      *   time: total animation time
      *   kframe_func: name of function in `keyframe_functions` to animate with
+     *   callback: optional. callback function to call after animation finished
      */
 
     let start_pos = this.position.clone();
@@ -677,6 +763,14 @@ WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe
         obj.rotation = curr_rot;
         obj.position = curr_rot.apply_rotation(start_pos.add_vector_and_return(move_to_origin)).add_vector_and_return(move_back);
 
+
+        // call callback at end of animation
+        if (count == max_count) {
+            if (callback !== undefined) {
+                callback();
+            }
+        }
+
     }, interval)
 
 }
@@ -690,13 +784,14 @@ WorldObject.prototype.translate = function(vector) {
     this.position.add_vector(vector);
 }
 
-WorldObject.prototype.animate_translation = function(vector, time, kframe_func) {
+WorldObject.prototype.animate_translation = function(vector, time, kframe_func, callback) {
     /*
      * Animate object translation
      * Parameters:
      *   vector: Vector object defining translation
      *   time: total animation time
      *   kframe_func: name of function in `keyframe_functions` to animate with
+     *   callback: optional. callback function to call after animation finished
      */
     let start_pos = this.position.clone();
 
@@ -721,6 +816,13 @@ WorldObject.prototype.animate_translation = function(vector, time, kframe_func) 
         // translate as required
         obj.position = start_pos.add_vector_and_return(vector.multiply(perc));
 
+        // call callback at end of animation
+        if (count == max_count) {
+            if (callback !== undefined) {
+                callback();
+            }
+        }
+
     }, interval)
 }
 
@@ -737,12 +839,17 @@ WorldObject.rotate_objects = function(objects, rotation, origin) {
     }
 }
 
-WorldObject.animate_object_rotations = function(objects, rotation, origin, time, kframe_func) {
+WorldObject.animate_object_rotations = function(objects, rotation, origin, time, kframe_func, callback) {
     /*
      * Animate multiple object rotations
+     * Callback will only be called once.
      */
     for (let x = 0; x<objects.length; x++) {
-        objects[x].animate_rotation(rotation, origin, time, kframe_func);
+        let c = undefined;
+        if (x == objects.length - 1) {
+            c = callback;
+        }
+        objects[x].animate_rotation(rotation, origin, time, kframe_func, c);
     }
 }
 
@@ -755,12 +862,17 @@ WorldObject.translate_objects = function(objects, vector) {
     }
 }
 
-WorldObject.animate_object_translations = function(objects, vector, time, kframe_func) {
+WorldObject.animate_object_translations = function(objects, vector, time, kframe_func, callback) {
     /*
      * Animate multiple object rotations
+     * Callback will only be called once.
      */
     for (let x = 0; x<objects.length; x++) {
-        objects[x].animate_translation(vector, time, kframe_func);
+        let c = undefined;
+        if (x == objects.length - 1) {
+            c = callback;
+        }
+        objects[x].animate_translation(vector, time, kframe_func, c);
     }
 }
 
