@@ -336,6 +336,83 @@ function Mesh(args) {
     //console.log(this, args);
 }
 
+// functions to generate common meshes
+Mesh.meshes = {
+    axis: function(s) {
+        let tip_offset = s/20;
+        let width_offset = s/40;
+        return new Mesh({
+            vertices: [
+                new Vertex(0, 0, 0),
+                new Vertex(s, 0, 0),
+                new Vertex(0, s, 0),
+                new Vertex(0, 0, s),
+            ],
+            edges: [
+                [0, 1],
+                [0, 2],
+                [0, 3],
+            ],
+            faces: [],
+            edge_materials: [
+                new EdgeMaterial({ fill_colour: 'red', line_width: 2, }),
+                new EdgeMaterial({ fill_colour: 'blue', line_width: 2, }),
+                new EdgeMaterial({ fill_colour: 'green', line_width: 2, }),
+            ]
+        })
+    },
+    right_angled_triangle: function(s) {
+        return new Mesh({
+            vertices: [
+                new Vertex(0, 0, 0),
+                new Vertex(s, 0, 0),
+                new Vertex(0, 0, s),
+            ],
+            edges: [
+                [0, 1],
+                [1, 2],
+                [2, 0],
+            ],
+            faces: []
+        });
+    },
+    line: function(v1, v2) {
+        return new Mesh({
+            vertices: [
+                v1,
+                v2,
+            ],
+            edges: [
+                [0, 1],
+            ],
+            faces: []
+        })
+    },
+    cube: function(s) {
+        return (new Mesh({
+            vertices: [
+                new Vertex(0, 0, 0), // 0, 0 0 0 
+                new Vertex(s, 0, 0), // 1, x 0 0 
+                new Vertex(0, s, 0), // 2, 0 y 0
+                new Vertex(0, 0, s), // 3, 0 0 z
+                new Vertex(s, s, 0), // 4, x y 0
+                new Vertex(s, 0, s), // 5, x 0 z
+                new Vertex(0, s, s), // 6, 0 y z
+                new Vertex(s, s, s), // 7, x y z
+            ],
+            edges: [],
+            faces: [
+                [0, 1, 5, 3],
+                [0, 3, 6, 2],
+                [0, 1, 4, 2], //bottom
+                [3, 5, 7, 6], //top
+                [2, 4, 7, 6],
+                [1, 5, 7, 4]
+            ],
+       })).translate(new Vector(-s/2, -s/2, -s/2));
+    },
+}
+
 Mesh.load_obj = function(obj, callback) {
     let obj_mesh_args = {
         vertices: [],

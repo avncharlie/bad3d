@@ -1,81 +1,3 @@
-const MESH = {
-    axis: function(s) {
-        let tip_offset = s/20;
-        let width_offset = s/40;
-        return new Mesh({
-            vertices: [
-                new Vertex(0, 0, 0),
-                new Vertex(s, 0, 0),
-                new Vertex(0, s, 0),
-                new Vertex(0, 0, s),
-            ],
-            edges: [
-                [0, 1],
-                [0, 2],
-                [0, 3],
-            ],
-            faces: [],
-            edge_materials: [
-                new EdgeMaterial({ fill_colour: 'red', line_width: 2, }),
-                new EdgeMaterial({ fill_colour: 'blue', line_width: 2, }),
-                new EdgeMaterial({ fill_colour: 'green', line_width: 2, }),
-            ]
-        })
-    },
-    cube: function(s) {
-        return (new Mesh({
-            vertices: [
-                new Vertex(0, 0, 0), // 0, 0 0 0 
-                new Vertex(s, 0, 0), // 1, x 0 0 
-                new Vertex(0, s, 0), // 2, 0 y 0
-                new Vertex(0, 0, s), // 3, 0 0 z
-                new Vertex(s, s, 0), // 4, x y 0
-                new Vertex(s, 0, s), // 5, x 0 z
-                new Vertex(0, s, s), // 6, 0 y z
-                new Vertex(s, s, s), // 7, x y z
-            ],
-            edges: [],
-            faces: [
-                [0, 1, 5, 3],
-                [0, 3, 6, 2],
-                [0, 1, 4, 2], //bottom
-
-                [3, 5, 7, 6], //top
-                [2, 4, 7, 6],
-                [1, 5, 7, 4]
-            ],
-       })).translate(new Vector(-s/2, -s/2, -s/2));
-    },
-    triangle: function(s) {
-        return new Mesh({
-            vertices: [
-                new Vertex(0, 0, 0),
-                new Vertex(s, 0, 0),
-                new Vertex(0, 0, s),
-            ],
-            edges: [
-                [0, 1],
-                [1, 2],
-                [2, 0],
-            ],
-            faces: []
-        });
-    },
-    line: function(v1, v2) {
-        return new Mesh({
-            vertices: [
-                v1,
-                v2,
-            ],
-            edges: [
-                [0, 1],
-            ],
-            faces: []
-        })
-    }
-}
-
-
 // get canvas and size to window
 let canvas = document.getElementById('outCanvas');
 let ctx = canvas.getContext('2d');
@@ -113,11 +35,11 @@ let world = new World({
 
 // add axis to world
 let axis = new WorldObject({
-    mesh: MESH.axis(5),
+    mesh: Mesh.meshes.axis(5),
     position: new Coord(0, 0, 0),
     rotation: new Rotation(0, 0, 0),
 });
-//world.objects.push(axis);
+world.objects.push(axis);
 
 // render
 function display() {
@@ -193,7 +115,7 @@ for (let x = 0; x < 3; x++) {
     for (let y = 0; y < 3; y++) {
         for (let z = 0; z < 3; z++) {
             // get materials
-            let mesh = MESH.cube(1);
+            let mesh = Mesh.meshes.cube(1);
             mesh.face_materials = create_mats(x, y, z);
 
             // create cubelet
@@ -293,14 +215,4 @@ function animate_rotate_face(face) {
 
 animate_rotate_face(MOVE.D_prime);
 
-//WorldObject.animate_object_rotations(
-//    F,
-//    new Rotation(
-//        Rotation.to_radians(0),
-//        Rotation.to_radians(90),
-//        Rotation.to_radians(0),
-//    ),
-//    new Coord(0, 0, 0),
-//    1000,
-//    KEYFRAME_FUNCTIONS.ease_in_out_sin
-//);
+let cube = new Cube();
