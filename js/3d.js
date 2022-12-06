@@ -323,6 +323,8 @@ function Mesh(args) {
     this.edges = args.edges;
     this.faces = args.faces;
 
+    // TODO / WARNING: using .fill fills with the same object 6 times, so materials are entangled!
+
     this.edge_materials = args.edge_materials;
     if (args.edge_materials == undefined) {
         this.edge_materials = Array(this.edges.length).fill(EdgeMaterial.default_edge_material());
