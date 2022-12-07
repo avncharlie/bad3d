@@ -25,15 +25,15 @@ The order of facelets in faces will be organised as such:
  */
 
 
-function Cube(cube_str) {
+function RubiksCube(cube_str) {
     if (cube_str === undefined) {
-        this.state = Cube.state_from_string(Cube.identity_string);
+        this.state = RubiksCube.state_from_string(RubiksCube.identity_string);
     } else {
-        this.state = Cube.state_from_string(cube_str);
+        this.state = RubiksCube.state_from_string(cube_str);
     }
 }
 
-Cube.state_from_string = function (s) {
+RubiksCube.state_from_string = function (s) {
 
     let state = {};
 
@@ -57,5 +57,4 @@ Cube.state_from_string = function (s) {
     return state;
 }
 
-Cube.identity_string = '123456789876543212345678987654321234567898765432123456';
-Cube.identity_string = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
+RubiksCube.identity_string = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
