@@ -360,6 +360,24 @@ RubiksCube.generate_moves = function() {
 
 RubiksCube.moves = RubiksCube.generate_moves();
 
+RubiksCube.inverse_moves = function(moves) {
+    let inverted = [];
+    for (let x = moves.length - 1; x >= 0; x--) {
+        let move = moves[x];
+
+        if (move.includes('2')) {
+            inverted.push(move);
+        } else if (move.includes("'")) {
+            inverted.push(move.slice(0,-1));
+        } else {
+            inverted.push(move + "'");
+        }
+    }
+
+    console.log(inverted);
+    return inverted;
+}
+
 RubiksCube._generate_nice_moves = function() {
     let moves = [];
     for (let m = 0; m < RubiksCube.moves.length; m++) {
