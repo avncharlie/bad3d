@@ -57,6 +57,17 @@ function do_move(move, time, callback) {
     }
 }
 function do_moves(moves, time, callback) {
+    if (typeof moves === 'string') {
+        moves = moves.split(' ');
+    }
+
+    if (moves.length == 0) {
+        if (callback !== undefined) {
+            callback();
+        }
+        return;
+    }
+
     moves = moves.slice();
     let move = moves[0];
     moves = moves.splice(1);
@@ -70,13 +81,37 @@ function do_moves(moves, time, callback) {
     });
 }
 
-
-// scramble
+// scramble cube
 let scramble = RubiksCube.generate_scramble(50);
-console.log(scramble);
 do_moves(scramble, 0);
 
-// invert scramble
-do_moves(RubiksCube.inverse_moves(scramble), 100, function() {
-    console.log('done');
-});
+// solve
+let solver = new BeginnersMethodSolver(cube);
+solve = solver.solve();
+
+let phases = [];
+let solve_moves = [];
+for (let s = 0; s < solve.length; s++) {
+    phases.push(solve[s].phase);
+    solve_moves = solve_moves.concat(solve[s].moves);
+}
+console.log(phases);
+let old_state = cube.clone_state();
+
+do_solve(solve);
+
+function do_solve(solve) {
+    if (solve.length == 0) {
+        return;
+    }
+
+    // do current phase
+    let phase = solve[0].phase;
+    let moves = solve[0].moves;
+
+    console.log(phase)
+
+    do_moves(moves, 250, function() {
+        do_solve(solve.slice(1));
+    })
+}

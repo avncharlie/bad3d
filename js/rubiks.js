@@ -31,6 +31,14 @@ function RubiksCube(cube_str) {
     } else {
         this.state = RubiksCube.state_from_string(cube_str);
     }
+    this.moves = [];
+}
+
+RubiksCube.prototype.clone = function() {
+    let clone = new RubiksCube();
+    clone.state = this.clone_state();
+    clone.moves = this.moves.slice(); // INCORRECT
+    return clone;
 }
 
 RubiksCube.prototype.clone_state = function() {
@@ -53,12 +61,71 @@ RubiksCube.prototype.clone_state = function() {
     }
 }
 
-RubiksCube.prototype.rotate_facelet_slice = function(axis, index, rotate_right) {
-    let affected_faces;
-    switch (axis) {
+RubiksCube.prototype.get_connected_facelets = function(face, x, y) {
+    let connected = [];
 
+    let axises = ['F', 'R', 'U'];
+
+    // dumb brute force
+    // should be smart way to do this
+    for (let i = 0; i < axises.length; i++) {
+        let axis = axises[i];
+
+        for (let index = 0; index < 3; index++) {
+            let rotation = this.face_rotations(axis, index);
+            if (axis == 'U') {
+                rotation.reverse();
+            }
+            
+            // get slice of facelets on axis and index
+            let rotation_facelets = [];
+            for (let y = 0; y < rotation.length + 1; y++) {
+                let curr_face = rotation[y % rotation.length];
+
+                for (let x = 0; x < 3; x++) {
+
+                    let index = x;
+                    if (curr_face.reverse_count) {
+                        index = 2 - x;
+                    }
+
+                    let index1;
+                    let index2;
+
+                    if (curr_face.is_horizontal) {
+                        index1 = curr_face.index;
+                        index2 = index;
+                    } else {
+                        index1 = index;
+                        index2 = curr_face.index;
+                    }
+
+                    rotation_facelets.push([curr_face.face, index1, index2]);
+                }
+            }
+
+            for (r = 0; r < rotation_facelets.length; r++) {
+                let [r_face, i1, i2] = rotation_facelets[r];
+                if (r_face == face && i1 == x && i2 == y) {
+                    // if connected face is different, win (must be connected on other face)
+                    if (r != 0 && rotation_facelets[r-1][0] != face) {
+                        connected.push(rotation_facelets[r-1]);
+                    } else if (r != rotation_facelets.length-1 && rotation_facelets[r+1][0] != face) {
+                        connected.push(rotation_facelets[r+1]);
+                    }
+                }
+            }
+        }
+    }
+
+    return connected;
+
+}
+
+RubiksCube.prototype.face_rotations = function(axis, index) {
+    switch (axis) {
         case 'F':
-            affected_faces = [
+            return [
                 {
                     face: 'U',
                     is_horizontal: true,
@@ -84,10 +151,8 @@ RubiksCube.prototype.rotate_facelet_slice = function(axis, index, rotate_right) 
                     reverse_count: true 
                 },
             ];
-            break;
-
         case 'R':
-            affected_faces = [
+            return [
                 {
                     face: 'U',
                     is_horizontal: false,
@@ -113,10 +178,8 @@ RubiksCube.prototype.rotate_facelet_slice = function(axis, index, rotate_right) 
                     reverse_count: true 
                 },
             ];
-            break;
-
         case 'U':
-            affected_faces = [
+            return [
                 {
                     face: 'L',
                     is_horizontal: true,
@@ -142,8 +205,11 @@ RubiksCube.prototype.rotate_facelet_slice = function(axis, index, rotate_right) 
                     reverse_count: false 
                 },
           ];
-          break;
     }
+}
+
+RubiksCube.prototype.rotate_facelet_slice = function(axis, index, rotate_right) {
+    let affected_faces = this.face_rotations(axis, index);
 
     if (!rotate_right) {
         affected_faces.reverse();
@@ -225,6 +291,8 @@ RubiksCube.prototype.rotate_facelets = function(face, rotate_right) {
 }
 
 RubiksCube.prototype.move = function(move) {
+    this.moves.push(move); // record move (for solves)
+
     // apply move to cube
 
     let is_prime = false;
@@ -446,3 +514,264 @@ RubiksCube.state_from_string = function (s) {
 }
 
 RubiksCube.identity_string = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
+
+// Generic cube solver class
+function Solver(cube) {
+    this.cube = cube.clone();
+    this.cube.moves = []; // reset move recording
+    this.solution = [];
+}
+
+// record a phase of a solve (i.e cross solve, f2l, etc)
+Solver.prototype.push_phase = function(phase_name) {
+    this.solution.push({
+        phase: phase_name,
+        moves: this.cube.moves.slice()
+    })
+    this.cube.moves = []; // reset moves for next phase
+}
+
+// find center piece
+Solver.prototype.find_center = function(center) {
+    if (this.cube.state.U[1][1] == center) {
+        return 'U'
+    } if (this.cube.state.R[1][1] == center) {
+        return 'R'
+    } if (this.cube.state.F[1][1] == center) {
+        return 'F'
+    } if (this.cube.state.D[1][1] == center) {
+        return 'D'
+    } if (this.cube.state.L[1][1] == center) {
+        return 'L'
+    } if (this.cube.state.B[1][1] == center) {
+        return 'B'
+    }
+}
+
+// orient cube 
+Solver.prototype.orient_center = function(center_to_orient, orient_location) {
+    switch (this.find_center('U')) {
+        case 'R':
+            this.cube.move("z'");
+            break;
+        case 'L':
+            this.cube.move("z");
+            break;
+        case 'F':
+            this.cube.move("x");
+            break;
+        case 'B':
+            this.cube.move("x'");
+            break;
+        case 'D':
+            this.cube.move("x2");
+            break;
+    }
+}
+
+Solver.prototype.edges_on_face = function(face, check_colour) {
+    let correct = [];
+
+    if (this.cube.state[face][0][1] == check_colour) {
+        correct.push([0, 1]);
+    } if (this.cube.state[face][1][0] == check_colour) {
+        correct.push([1, 0]);
+    } if (this.cube.state[face][1][2] == check_colour) {
+        correct.push([1, 2]);
+    } if (this.cube.state[face][2][1] == check_colour) {
+        correct.push([2, 1]);
+    }
+
+    return correct;
+}
+
+Solver.prototype.face_center_colour = function(facelet) {
+    let [f, i1, i2] = facelet;
+    return this.cube.state[f][1][1];
+}
+
+Solver.prototype.center_piece_side = function(colour) {
+    let faces = ['U', 'R', 'F', 'D', 'L', 'B'];
+    for (let f = 0; f < faces.length; f++) {
+        let curr_face = faces[f]
+        if (this.cube.state[curr_face][1][1] == colour) {
+            return curr_face;
+        }
+    }
+}
+
+Solver.prototype._face_to_colour = function(colour) {
+    switch (colour) {
+        case 'U':
+            return 'white';
+        case 'L':
+            return 'green';
+        case 'F':
+            return 'red';
+        case 'R':
+            return 'blue';
+        case 'D':
+            return 'yellow';
+        case 'B':
+            return 'orange';
+    }
+}
+
+Solver.prototype.facelet_colour = function(facelet) {
+    let [f, x, y] = facelet;
+    return this.cube.state[f][x][y];
+}
+
+// how many rotations to align edge with its center piece
+Solver.prototype.align_edge = function(sequence, edge_facelet, rotation) {
+    let edge_colour = this.facelet_colour(edge_facelet);
+    let curr_face = this.face_center_colour(edge_facelet);
+
+    // calculate moves needed to orient edge to colour
+    let loc = sequence.indexOf(curr_face);
+    let plus_two = sequence[(loc+2) % sequence.length];
+    let plus_one = sequence[(loc+1) % sequence.length];
+    let minus_one = sequence[mod((loc-1), sequence.length)];
+
+    // orient edge  
+
+    if (plus_two == edge_colour) {
+        this.cube.move(rotation + "2");
+    } else if (plus_one == edge_colour) {
+        this.cube.move(rotation);
+    } else if (minus_one == edge_colour) {
+        if (rotation.includes("'")) {
+            this.cube.move(rotation.slice(0,-1));
+        } else {
+            this.cube.move(rotation+"'");
+        }
+    }
+}
+
+// beginners method solver (extends generic solver)
+Object.setPrototypeOf(
+    BeginnersMethodSolver.prototype,
+    Solver.prototype,
+)
+
+function BeginnersMethodSolver(cube) {
+    Solver.call(this, cube);
+}
+
+// works with negative
+function mod(n, m) {
+    return ((n % m) + m) % m;
+}
+
+BeginnersMethodSolver.prototype.solve = function() {
+    /// solve cross 
+
+    // orient white center to top
+    this.orient_center('U', 'U');
+    this.push_phase('Orient white center on top');
+
+    let white_edge_squence = ['F', 'R', 'B', 'L'];
+    let rev_white_edge_squence = ['F', 'R', 'B', 'L'].reverse();
+
+    // find greatest number of already solved top edge pieces
+    let top_edges = [undefined, undefined, undefined, undefined]
+
+    // get white top pieces
+    if (this.cube.state['U'][0][1] == 'U') {
+        top_edges[0] = this.facelet_colour(this.cube.get_connected_facelets('U', 0, 1)[0]);
+    } if (this.cube.state['U'][1][2] == 'U') {
+        top_edges[1] = this.facelet_colour(this.cube.get_connected_facelets('U', 1, 2)[0]);
+    } if (this.cube.state['U'][2][1] == 'U') {
+        top_edges[2] = this.facelet_colour(this.cube.get_connected_facelets('U', 2, 1)[0]);
+    } if (this.cube.state['U'][1][0] == 'U') {
+        top_edges[3] = this.facelet_colour(this.cube.get_connected_facelets('U', 1, 0)[0]);
+    }
+
+    // find all correct combinations of already existing white top pieces
+    let corr_edges = [];
+    for (let x = 0; x < top_edges.length; x++) {
+        top_edge = top_edges[x];
+
+        // skip edges not on top
+        if (top_edge === undefined) {
+            continue;
+        }
+
+        // skip edges already included in a correct edgelist
+        let cont = false;
+        for (let ei = 0; ei < corr_edges.length; ei++) {
+            if (corr_edges[ei].includes(top_edge)) {
+                cont = true;
+            }
+        } if (cont) {
+            continue;
+        }
+
+        // check all matching already existing edge pieces to current one
+        let correct = [];
+        let rev_offset = rev_white_edge_squence.indexOf(top_edge);
+        for (let y = 0; y < 4; y++) {
+            let on_top = top_edges[(x+y) % 4];
+            let expected = rev_white_edge_squence[(rev_offset+y) % 4];
+
+            if (on_top !== undefined && on_top == expected) {
+                correct.push(expected);
+            }
+        }
+        // record correct edge list
+        corr_edges.push(correct);
+    }
+
+    // find longest combination of correct edges from correct edge list
+    let longest_corr = [];
+    for (let ei = 0; ei < corr_edges.length; ei++) {
+        if (corr_edges[ei].length > longest_corr.length) {
+            longest_corr = corr_edges[ei];
+        }
+    }
+
+    // if any top edges exist, orient the longest correct combination of them
+    if (longest_corr.length > 0) {
+        let check_face = longest_corr[0];
+        let white_top = this.edges_on_face('U', 'U');
+
+        for (let x = 0; x < white_top.length; x++) {
+            edge_facelet = this.cube.get_connected_facelets('U', white_top[x][0], white_top[x][1])[0];
+            if (this.facelet_colour(edge_facelet) == check_face) {
+                // align top face
+                this.align_edge(white_edge_squence, edge_facelet, "U'");
+            }
+        }
+
+        // record top face alignment in solution
+        let s = '';
+        for (let i = 0; i < longest_corr.length; i++) {
+            s += this._face_to_colour(longest_corr[i]) + ', '
+        }
+
+        this.push_phase('Align solved white edge pieces ('+s.slice(0,-2) +')');
+
+    }
+
+    // solve edges on bottom
+    while (true) {
+        let edges_on_bottom = this.edges_on_face('D', 'U');
+        if (edges_on_bottom.length == 0) {
+            break;
+        }
+
+        // solve next bottom edge
+        let edge_facelet = this.cube.get_connected_facelets('D', edges_on_bottom[0][0],
+            edges_on_bottom[0][1])[0];
+        let edge_colour = this.facelet_colour(edge_facelet);
+
+        // align edge
+        this.align_edge(white_edge_squence, edge_facelet, 'D');
+
+        // move edge to top
+        this.cube.move(this.center_piece_side(edge_colour)+"2");
+        this.push_phase('Solve white+' + this._face_to_colour(edge_colour) + ' edge piece')
+    }
+
+    return this.solution;
+}
