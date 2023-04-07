@@ -5,3 +5,30 @@ html, body {
     overflow: hidden;
     margin: 0;
 }
+
+#text {
+
+    top: 100px;
+
+    width: 100%;
+
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+
+    text-align: center;
+
+}
+
+#current {
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    font-size: 2.5em;
+}
+
+#next {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: 1.8em;
+}
