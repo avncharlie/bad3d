@@ -1,5 +1,7 @@
-/*
- * 3d framework start
+/**
+ * @file 
+ * A bad 3d framework.
+ * @author Alvin Charles <alvinjoycharles@gmail.com>
  */
 
 // Classes:
@@ -15,76 +17,134 @@
 // Constants:
 //   KEYFRAME_FUNCTIONS
 
-/*
- * Set of functions used for keyframing. All functions take progress as value
- * between 0 to 1 as input and output value between 0 and 1. functions should
- * pass through (0,0) and (1,1).
- * See https://easings.net/ for visualisations of below easings
+/**
+ * Set of functions used for keyframing. All functions input and output values
+ * between `0` and `1`. All functions should pass through `(0,0)` and `(1,1)`.
+ *
+ * See {@link https://easings.net} for visualisations of below easings.
+ * @enum
  */
 const KEYFRAME_FUNCTIONS = {
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=x" title="https://latex.codecogs.com/svg.image?y=x" />
+     * @type {function}
+     */
     linear: function(p) {
         return p;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=\sin\left(\frac{\pi&space;x}{2}\right)" title="https://latex.codecogs.com/svg.image?y=\sin\left(\frac{\pi x}{2}\right)" />
+     * @type {function}
+     */
     ease_out_sin: function(p) {
         return Math.sin((Math.PI * p)/2);
     },
+    /** 
+     * <img src="https://latex.codecogs.com/svg.image?y=\sin\left(\frac{\pi\left(x-1\right)}{2}\right)&plus;1" title="https://latex.codecogs.com/svg.image?y=\sin\left(\frac{\pi\left(x-1\right)}{2}\right)+1" />
+     * @type {function}
+     */
     ease_in_sin: function(p) {
         return Math.sin( (Math.PI*(p-1))/2 ) + 1;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=\frac{\left(\sin\left(\frac{\pi\left(2x-1\right)}{2}\right)&plus;1\right)}{2}" title="https://latex.codecogs.com/svg.image?y=\frac{\left(\sin\left(\frac{\pi\left(2x-1\right)}{2}\right)+1\right)}{2}" />
+     * @type {function}
+     */
     ease_in_out_sin: function(p) {
         return (Math.sin( (Math.PI*(2*p - 1))/2  ) + 1) / 2;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=x^{2}" title="https://latex.codecogs.com/svg.image?y=x^{2}" />
+     * @type {function}
+     */
     ease_in_quadratic: function(p) {
         return p**2;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=1-\left(x-1\right)^{2}" title="https://latex.codecogs.com/svg.image?y=1-\left(x-1\right)^{2}" />
+     * @type {function}
+     */
     ease_out_quadratic: function(p) {
         return -1*(p-1)**2 + 1;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=x^{3}" title="https://latex.codecogs.com/svg.image?y=x^{3}" />
+     * @type {function}
+     */
     ease_in_cubic: function(p) {
         return p**3;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=\left(x-1\right)^{3}&plus;1" title="https://latex.codecogs.com/svg.image?y=\left(x-1\right)^{3}+1" />
+     * @type {function}
+     */
     ease_out_cubic: function(p) {
         return (p-1)**3+1;
     },
+    /**
+     * <img src="https://latex.codecogs.com/svg.image?y=\left\{\begin{array}{&space;c&space;l&space;}y=4x^{3}&\quad\textrm{if&space;}x<\frac{1}{2}\\y=\frac{\left(2p-2\right)^{3}&plus;2}{2}&\quad\textrm{otherwise}\end{array}\right." title="https://latex.codecogs.com/svg.image?y=\left\{\begin{array}{ c l }y=4x^{3}&\quad\textrm{if }x<\frac{1}{2}\\y=\frac{\left(2p-2\right)^{3}+2}{2}&\quad\textrm{otherwise}\end{array}\right." />
+     * @type {function}
+     */
     ease_in_out_cubic: function(p) {
         if (p < 0.5) {
             return 4*p**3;
         } 
         return ((2*p-2)**3+2)/2;
     }
-
 }
 
+/**
+ * Represents a 3d coordinate.
+ * @constructor
+ * @param {number} x - x coordinate
+ * @param {number} y - y coordinate
+ * @param {number} z - z coordinate
+ */
 function Coord(x, y, z) {
     this.x = x;
     this.y = y;
     this.z = z;
 }
 
+/**
+ * Scales a coordinate.
+ * @param {number} scale - scale factor
+ */
 Coord.prototype.scale = function(scale) {
     this.x *= scale;
     this.y *= scale;
     this.z *= scale;
 }
 
-Coord.prototype.add = function(thing) {
-    this.add_vector(thing);
+/**
+ * Add coordinate to self
+ * @param {Coord} coord - coordinate to add
+ */
+Coord.prototype.add = function(coord) {
+    this.x += coord.x;
+    this.y += coord.y;
+    this.z += coord.z;
+
 }
 
-Coord.prototype.add_vector = function(vector) {
-    this.x += vector.x;
-    this.y += vector.y;
-    this.z += vector.z;
-}
-
-Coord.prototype.add_vector_and_return = function(vector) {
+/**
+ * TODO: maybe move to vector
+ * Add coordinate and return new vector
+ * @param {Coord} coord - coordinate to add
+ * @returns {Vector}
+ */
+Coord.prototype.add_new = function(coord) {
     return new Vector(
-        this.x + vector.x,
-        this.y + vector.y,
-        this.z + vector.z,
+        this.x + coord.x,
+        this.y + coord.y,
+        this.z + coord.z,
     )
 }
 
+/**
+ * Subtract coordinate from self
+ * @param {Coord} coord - coordinate to add
+ */
 Coord.prototype.subtract = function(coord) {
     return new Vector(
         this.x - coord.x,
@@ -93,11 +153,19 @@ Coord.prototype.subtract = function(coord) {
     );
 }
 
+/**
+ * Calculate zero distance of coordinate
+ * @returns {number}
+ */
 Coord.prototype.zero_distance = function() {
     let dist = Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
     return dist;
 }
 
+/**
+ * Clone self and return
+ * @returns {Coord}
+ */
 Coord.prototype.clone = function() {
     return new Coord(
         this.x,
@@ -112,6 +180,14 @@ Object.setPrototypeOf(
     Coord.prototype,
 );
 
+/**
+ * Represents a 3d vertex.
+ * @constructor
+ * @param {number} x - x coordinate
+ * @param {number} y - y coordinate
+ * @param {number} z - z coordinate
+ * @extends Coord
+ */
 function Vertex(x, y, z) { 
     Coord.call(this, x, y, z);
 }
@@ -122,10 +198,23 @@ Object.setPrototypeOf(
     Coord.prototype,
 );
 
+/**
+ * Represents a 3d vector.
+ * @constructor
+ * @param {number} x - x coordinate
+ * @param {number} y - y coordinate
+ * @param {number} z - z coordinate
+ * @extends Coord
+ */
 function Vector(x, y, z) { 
     Coord.call(this, x, y, z);
 }
 
+/**
+ * Mutiply vector by factor and return new vector.
+ * @param {number}
+ * @returns {Vector}
+ */
 Vector.prototype.multiply = function(m) {
     return new Vector(
         this.x * m,
@@ -134,19 +223,24 @@ Vector.prototype.multiply = function(m) {
     )
 }
 
+/**
+ * Represents a rotation as Euler angles.
+ * @constructor
+ * @param {number} Rx - clockwise rotation on x axis (radians)
+ * @param {number} Ry - clockwise rotation on y axis (radians)
+ * @param {number} Rz - clockwise rotation on z axis (radians)
+ */
 function Rotation(Rx, Ry, Rz) {
-    /*
-     * Stores rotation. 
-     * Parameters:
-     *   Rx: clockwise rotation on x axis (radians)
-     *   Ry: clockwise rotation on y axis (radians)
-     *   Rz: clockwise rotation on z axis (radians)
-     */
     this.Rx = Rx;
     this.Ry = Ry;
     this.Rz = Rz;
 }
 
+/**
+ * Return rotation multiplied on every axis.
+ * @param {number} m - rotation amount
+ * @returns {Rotation}
+ */
 Rotation.prototype.multiply = function(m) {
     return new Rotation(
         this.Rx * m,
@@ -155,6 +249,10 @@ Rotation.prototype.multiply = function(m) {
     )
 }
 
+/**
+ * Clone self and return.
+ * @returns {Rotation}
+ */
 Rotation.prototype.clone = function() {
     return new Rotation(
         this.Rx,
@@ -163,14 +261,29 @@ Rotation.prototype.clone = function() {
     )
 }
 
+/**
+ * Convert from radians to degrees.
+ * @param {number} angle (radians)
+ * @returns {number}
+ */
 Rotation.to_degrees = function(angle) {
     return angle * (180 / Math.PI);
 }
 
+/**
+ * Convert from degrees to radians.
+ * @param {number} angle (degrees)
+ * @returns {number}
+ */
 Rotation.to_radians = function(angle) {
     return angle * (Math.PI / 180);
 }
 
+/**
+ * Apply rotation to Coord, Vertex or vector
+ * @param {Coord} to_rotate - object to rotate
+ * @returns {(Coord|Vertex|Vector)} 
+ */
 Rotation.prototype.apply_rotation = function(C) {
     /*
      * Apply rotation to Coord, Vertex or Vector
@@ -203,6 +316,11 @@ Rotation.prototype.apply_rotation = function(C) {
     return new Coord(x_rot, y_rot, z_rot);
 }
 
+/**
+ * Apply rotation to Mesh
+ * @param {Mesh} mesh - mesh to rotate
+ * @returns {Mesh}
+ */
 Rotation.prototype.apply_rotation_to_mesh = function(mesh) {
     let rotated_mesh = new Mesh({
         vertices: [],
@@ -221,6 +339,12 @@ Rotation.prototype.apply_rotation_to_mesh = function(mesh) {
     return rotated_mesh;
 }
 
+/**
+ * Given an observor position and a point the observer is facing, set self to
+ * be the rotation of the observer.
+ * @param {Coord} position - position of observor
+ * @param {Coord} looking_at - coordinate observor is looking at
+ */
 Rotation.prototype.calculate_rotation_looking_at = function(position, looking_at) {
     let D = position.subtract(looking_at);
 
@@ -255,17 +379,22 @@ Rotation.prototype.calculate_rotation_looking_at = function(position, looking_at
     }
 };
 
+/**
+ * Defines material for edges.
+ * @constructor
+ * @param {Object} args - object containing information about the material
+ * @param {string} args.fill_colour - colour to draw line with
+ * @param {number} args.line_width - pixel width of line
+ */
 function EdgeMaterial(args) {
-    /*
-     * Defines materal for edges 
-     * Parameters:
-     *   fill_colour: colour to draw line with
-     *   line_width: pixel width of line
-     */
     this.fill_colour = args.fill_colour;
     this.line_width = args.line_width;
 }
 
+/**
+ * Clone self and return.
+ * @returns {EdgeMaterial}
+ */
 EdgeMaterial.prototype.clone = function() {
     return new EdgeMaterial({
         fill_colour: this.fill_colour,
@@ -273,6 +402,10 @@ EdgeMaterial.prototype.clone = function() {
     });
 }
 
+/**
+ * Returns default edge material: `{fill_colour: 'gray', width: 1}`
+ * @returns {EdgeMaterial}
+ */
 EdgeMaterial.default_edge_material = function() {
     return new EdgeMaterial({
         fill_colour: 'gray',
@@ -280,19 +413,24 @@ EdgeMaterial.default_edge_material = function() {
     });
 }
 
+/**
+ * Defines material for faces.
+ * @constructor
+ * @param {Object} args - object containing information about the material
+ * @param {string} args.fill_colour - colour to draw face with
+ * @param {boolean} args.stroke_edge - whether or not to draw face edge lines
+ * @param {EdgeMaterial} args.edge_style - EdgeMaterial to draw face lines with (if `stroke_edge` is true)
+ */
 function FaceMaterial(args) {
-    /*
-     * Defines materal for faces 
-     * Parameters:
-     *   fill_colour: colour to draw face with
-     *   stroke_edge: boolean, whether or not to draw face edge lines
-     *   edge_style: EdgeMaterial to draw face lines with (if stroke_edge is true)
-     */
     this.fill_colour = args.fill_colour;
     this.stroke_edge = args.stroke_edge;
     this.edge_style = args.edge_style;
 }
 
+/**
+ * Clone self and return.
+ * @returns {EdgeMaterial}
+ */
 FaceMaterial.prototype.clone = function() {
     return new FaceMaterial({
         fill_colour: this.fill_colour,
@@ -301,6 +439,10 @@ FaceMaterial.prototype.clone = function() {
     })
 }
 
+/**
+ * Returns default face material: `{fill_colour: 'lightgray', stroke_edge=true, edge_style=EdgeMaterial.default_edge_material()}`
+ * @returns {FaceMaterial}
+ */
 FaceMaterial.default_face_material = function() {
     return new FaceMaterial({
         fill_colour: 'lightgray',
@@ -309,16 +451,18 @@ FaceMaterial.default_face_material = function() {
     });
 }
 
+
+/**
+ * Stores collection of vertices, edges and faces defining a mesh.
+ * @constructor
+ * @param {Object} args - object containing information about the mesh
+ * @param {Vertex[][]} args.vertices - list of (list of two vertices defining edge)
+ * @param {Vertex[][]} args.faces - list of (list of vertices defining a face)
+ * @param {EdgeMaterial[]} [args.edge_materials] - list of materials for given edges.
+ * @param {FaceMaterial[]} [args.face_materials] - list of materials for given faces.
+ */
+
 function Mesh(args) {
-    /*
-     * Stores collection of vertices, edges and faces defining a mesh
-     * Parameters:
-     *   vertices: list of Vertex objects
-     *   edges: list of (list of two vertices defining edge)
-     *   faces: list of (list of vertices defining a face)
-     *   edge_materials: list of EdgeMaterial defining materials for given edges. optional.
-     *   face_materials: list of FaceMaterial defining materials for given faces. optional.
-     */
     this.vertices = args.vertices;
     this.edges = args.edges;
     this.faces = args.faces;
@@ -342,8 +486,15 @@ function Mesh(args) {
     //console.log(this, args);
 }
 
-// functions to generate common meshes
+/**
+ * Functions to generate common meshes
+ * @enum
+ */
 Mesh.meshes = {
+    /**
+     * Generate axis 
+     * @type {function}
+     */
     axis: function(s) {
         let tip_offset = s/20;
         let width_offset = s/40;
@@ -367,6 +518,10 @@ Mesh.meshes = {
             ]
         })
     },
+    /**
+     * Generate right angled triangle
+     * @type {function}
+     */
     right_angled_triangle: function(s) {
         return new Mesh({
             vertices: [
@@ -382,6 +537,10 @@ Mesh.meshes = {
             faces: []
         });
     },
+     /**
+     * Generate line between two points
+     * @type {function}
+     */
     line: function(v1, v2) {
         return new Mesh({
             vertices: [
@@ -394,6 +553,10 @@ Mesh.meshes = {
             faces: []
         })
     },
+     /**
+     * Generate cube
+     * @type {function}
+     */
     cube: function(s) {
         return (new Mesh({
             vertices: [
@@ -419,6 +582,12 @@ Mesh.meshes = {
     },
 }
 
+
+/**
+ * Function to load .obj data
+ * @param {string} obj - obj data
+ * @param {function(Mesh)} callback - a callback to run with the loaded mesh
+ */
 Mesh.load_obj = function(obj, callback) {
     let obj_mesh_args = {
         vertices: [],
@@ -460,6 +629,11 @@ Mesh.load_obj = function(obj, callback) {
     callback(new Mesh(obj_mesh_args));
 }
 
+/**
+ * Function to load .obj file. After loading, executes callback with loaded mesh.
+ * @param {string} file_path - path to obj file
+ * @param {function(Mesh)} callback - a callback to run with the loaded mesh
+ */
 Mesh.load_obj_file = function(file_path, callback) {
     /*
      * Load mesh from obj file. After loading, execute callback(loaded_mesh)
@@ -475,26 +649,33 @@ Mesh.load_obj_file = function(file_path, callback) {
         });
 }
 
+/**
+ * Translate self (in-place)
+ * @param {Vector} - vector to translate mesh by 
+ * @return {Mesh}
+ */
 Mesh.prototype.translate = function(vector) {
-    /*
-     * Translate mesh in place
-     */
     for (let x = 0; x < this.vertices.length; x++) {
-        this.vertices[x].add_vector(vector);
+        this.vertices[x].add(vector);
     }
     return this;
 }
 
+/**
+ * Return self translated by vector (not in-place)
+ * @param {Vector} - vector to translate mesh by 
+ * @return {Mesh}
+ */
 Mesh.prototype.get_translation = function(vector) {
-    /*
-     * Translate mesh and return
-     */
-
     let r_mesh = this.clone();
     r_mesh.translate(vector);
     return r_mesh;
 }
 
+/**
+ * Clone self and return
+ * @returns {Mesh}
+ */
 Mesh.prototype.clone = function() {
     let new_verts = [];
     for (let x = 0; x < this.vertices.length; x++) {
@@ -530,17 +711,16 @@ Mesh.prototype.clone = function() {
     });
 }
 
+/**
+ * Camera information used for rendering.
+ * @constructor
+ * @param {Object} args - object containing information used for rendering
+ * @param {Coord} args.position - Coord object defining camera's position in the world
+ * @param {number} args.distance - How far the projection is away from the camera position, generally set to 1
+ * @param {Rotation} args.rotation - Rotation object defining rotation of camera. Initialisation not needed if look_at function will be used to set rotation
+ * @param {number} args.scale - Scale of output image.
+ */
 function Camera(args) {
-    /*
-     * Camera information used for rendering.
-     * Parameters:
-     *   position: Coord object defining camera's position in the world
-     *   distance: How far the projection is away from the camera position,
-     *      generally set to 1
-     *   rotation: Rotation object defining rotation of camera, not needed if
-     *      look_at function used set rotation
-     *   scale: Scale of output image
-     */
     this.position = args.position;
     this.distance = args.distance;
     this.rotation = args.rotation;
@@ -548,21 +728,23 @@ function Camera(args) {
 
 }
 
+/**
+ * Orient camera at location.
+ * @param {Coord} looking_at - Coord camera should be looking at.
+ */
 Camera.prototype.look_at = function(looking_at) {
     this.rotation.calculate_rotation_looking_at(this.position, looking_at);
 }
 
+/**
+ * Rotate camera around origin, given horizontal and vertical angles of
+ * movement. Essentially implements a 3d arcball.
+ * @param {number} x_degrees - hoizontal degrees to move camera around origin
+ * @param {number} y_degrees - vertical degrees to move camera around origin
+ * @param {Coord} [start_pos] - start camera position to apply rotation from
+ */
 Camera.prototype.rotate_camera = function(x_degrees, y_degrees, start_pos) {
-    /*
-     * Rotate camera around origin, given horizontal and vertical angles of
-     * movement. Essentially implements a 3d arcball.
-     * Parameters:
-     *   x_degrees: hoizontal #degrees to move camera around origin
-     *   y_degrees: vertical #degrees to move camera around origin
-     *   start_pos [optional]: start camera position to apply rotation from
-     */
-
-    let spos = start_pos;
+   let spos = start_pos;
     if (start_pos === undefined) {
         spos = this.position; 
     }
@@ -573,18 +755,17 @@ Camera.prototype.rotate_camera = function(x_degrees, y_degrees, start_pos) {
 
     let rot = new Rotation(x_ratio*x_degrees, -y_ratio*x_degrees, y_degrees);
 
-    camera.position = rot.apply_rotation(spos)
-    camera.look_at(new Coord(0, 0, 0)); 
+    this.position = rot.apply_rotation(spos)
+    this.look_at(new Coord(0, 0, 0)); 
 }
 
+/**
+ * Set handlers to allow camera to be draged around origin
+ * @param {Object} args - object containing drag settings
+ * @param {HTMLElement} args.element - element to register drag and touch event handlers on
+ * @param {number} drag_degrees - degrees to rotate camera around on drag 
+ */
 Camera.prototype.set_draggable = function(args) {
-    /*
-     * Allows camera to be dragged around origin
-     * Parameter:
-     *   element: element to register drag and touch event handlers on
-     *   drag_degrees: degrees to rotate camera around on drag 
-     */
-
     let cam = this;
 
     let elem = args.element;
@@ -638,18 +819,15 @@ Camera.prototype.set_draggable = function(args) {
         onMouseMove(event);
         elem.removeEventListener('mousemove', onMouseMove);
     });
-
 }
 
+/**
+ * Set handlers to allow scrolling to zoom the camera
+ * @param {Object} args - object containing scroll settings
+ * @param {HTMLElement} args.element - element to register scroll event handler on
+ * @param {number} scroll_amount - amount to increase/decrease camera scale per scroll
+ */
 Camera.prototype.set_scrollable = function(args) {
-    /*
-     * Enables scrolling to zoom scene
-     * Allows camera to be dragged around origin
-     * Parameter:
-     *   element: element to register scroll event handler on
-     *   scroll_amount: amount to increase/decrease camera scale per scroll 
-     */
-
     let elem = args.element;
     let scroll_amount = args.scroll_amount;
 
@@ -663,13 +841,12 @@ Camera.prototype.set_scrollable = function(args) {
     });
 }
 
+/**
+ * Enable camera movement through WASD keys
+ * @param {Object} args - object containing key move settings
+ * @param {number} args.angle - angle camera moves per key press
+ */
 Camera.prototype.set_WASD_controls = function(args) {
-    /*
-     * Enable camera movement through WASD keys
-     * Parameters:
-     *   angle: angle camera moves per key press
-     */
-
     let angle = args.angle;
     let cam = this;
 
@@ -687,19 +864,24 @@ Camera.prototype.set_WASD_controls = function(args) {
     });
 }
 
+/**
+ * Defines object in world
+ * @constructor
+ * @param {Object} args - object containing WorldObject info
+ * @param {Mesh} mesh - mesh of object
+ * @param {Coord} position - object position in world
+ * @param {Rotation} rotation - object rotation
+ */
 function WorldObject(args) {
-    /*
-     * Defines object in world
-     * Parameters:
-     *   mesh: Mesh object defining mesh of object
-     *   position: Coord object defining object position in world
-     *   rotation: Rotation object defining object rotation
-     */
     this.mesh = args.mesh;
     this.position = args.position;
     this.rotation = args.rotation;
 }
 
+/**
+ * Clone self and return
+ * @returns {WorldObject}
+ */
 WorldObject.prototype.clone = function() {
     return new WorldObject({
         mesh: this.mesh.clone(),
@@ -708,32 +890,30 @@ WorldObject.prototype.clone = function() {
     });
 }
 
+/**
+ * Rotate object around point
+ * @param {Rotation} rotation - rotation to apply to object
+ * @param {Coord} origin - origin point of rotation
+ * @returns {WorldObject}
+ */
 WorldObject.prototype.rotate = function(rotation, origin) {
-    /*
-     * Rotate object around point
-     * Parameters:
-     *   rotation: Rotation object defining rotation
-     *   origin: Coord object that will be origin of rotation
-     */
     let move_to_origin = (new Coord(0,0,0)).subtract(origin);
     let move_back = move_to_origin.multiply(-1)
 
     this.rotation = rotation;
-    this.position = rotation.apply_rotation(this.position.add_vector_and_return(move_to_origin))
-        .add_vector_and_return(move_back);
+    this.position = rotation.apply_rotation(this.position.add_new(move_to_origin))
+        .add_new(move_back);
 }
 
+/**
+ * Animate object rotation
+ * @param {Rotation} rotation - end rotation of animation
+ * @param {Coord} origin - origin of rotation
+ * @param {number} time - total animation time
+ * @param {KEYFRAME_FUNCTIONS} kframe_func - keyframe function to animate with 
+ * @param {function} [callback] - function to call after animation finished
+ */
 WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe_func, callback) {
-    /*
-     * Animate object rotation
-     * Parameters:
-     *   rotation: Rotation object defining end rotation of animation
-     *   origin: Coord object that will be origin of rotation
-     *   time: total animation time
-     *   kframe_func: name of function in `keyframe_functions` to animate with
-     *   callback: optional. callback function to call after animation finished
-     */
-
     let start_pos = this.position.clone();
 
     let move_to_origin = (new Coord(0,0,0)).subtract(origin);
@@ -761,7 +941,7 @@ WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe
         let curr_rot = rotation.multiply(perc);
 
         obj.rotation = curr_rot;
-        obj.position = curr_rot.apply_rotation(start_pos.add_vector_and_return(move_to_origin)).add_vector_and_return(move_back);
+        obj.position = curr_rot.apply_rotation(start_pos.add_new(move_to_origin)).add_new(move_back);
 
 
         // call callback at end of animation
@@ -775,24 +955,23 @@ WorldObject.prototype.animate_rotation = function(rotation, origin, time, kframe
 
 }
 
+/**
+ * Translate object
+ * @param {Vector} vector - vector to translate object by
+ */
 WorldObject.prototype.translate = function(vector) {
-    /*
-     * Translate object
-     * Parameters:
-     *   vector: Vector object defining translation
-     */
     this.position.add_vector(vector);
 }
 
+/*
+ * Animate object translation
+ * @param {Vector} vector - vector to translate object by 
+ * @param {number} time - total animation time
+ * @param {KEYFRAME_FUNCTIONS} kframe_func - keyframe function to animate with 
+ * @param {function} [callback] - function to call after animation finished
+ */
 WorldObject.prototype.animate_translation = function(vector, time, kframe_func, callback) {
-    /*
-     * Animate object translation
-     * Parameters:
-     *   vector: Vector object defining translation
-     *   time: total animation time
-     *   kframe_func: name of function in `keyframe_functions` to animate with
-     *   callback: optional. callback function to call after animation finished
-     */
+    
     let start_pos = this.position.clone();
 
     let interval = 10;
@@ -814,7 +993,7 @@ WorldObject.prototype.animate_translation = function(vector, time, kframe_func, 
         perc = kframe_func(perc);
 
         // translate as required
-        obj.position = start_pos.add_vector_and_return(vector.multiply(perc));
+        obj.position = start_pos.add_new(vector.multiply(perc));
 
         // call callback at end of animation
         if (count == max_count) {
@@ -826,24 +1005,29 @@ WorldObject.prototype.animate_translation = function(vector, time, kframe_func, 
     }, interval)
 }
 
-/*
- * Helper functions to apply and animate transformations on multiple objects
+/**
+ * Rotate multiple objects around point
+ * @param {WorldObject[]} objects - array of objects to rotate
+ * @param {Rotation} rotation - rotation to apply to objects
+ * @param {Coord} origin - origin to rotate around
  */
-
 WorldObject.rotate_objects = function(objects, rotation, origin) {
-    /*
-     * Rotate multiple objects around point 
-     */
     for (let x = 0; x<objects.length; x++) {
         objects[x].rotate(rotation, origin);
     }
 }
 
+/**
+ * Animate multiple object rotations
+ * @param {WorldObject[]} objects - array of objects to animate rotation
+ * @param {Rotation} rotation - rotation to apply to objects
+ * @param {Coord} origin - origin to rotate around
+ * @param {number} time - animation time
+ * @param {KEYFRAME_FUNCTIONS} kframe_func - keyframe function to animate with
+ * @param {function} [callback] - function to call after animation finished
+ */
 WorldObject.animate_object_rotations = function(objects, rotation, origin, time, kframe_func, callback) {
-    /*
-     * Animate multiple object rotations
-     * Callback will only be called once.
-     */
+    // Callback will only be called once.
     for (let x = 0; x<objects.length; x++) {
         let c = undefined;
         if (x == objects.length - 1) {
@@ -853,20 +1037,27 @@ WorldObject.animate_object_rotations = function(objects, rotation, origin, time,
     }
 }
 
+/**
+ * Translate multiple objects 
+ * @param {WorldObject[]} objects - array of objects to translate
+ * @param {Vector} vector - vector to apply to objects
+ */
 WorldObject.translate_objects = function(objects, vector) {
-    /*
-     * Translate multiple objects
-     */
     for (let x = 0; x<objects.length; x++) {
         objects[x].translate(vector);
     }
 }
 
+/**
+ * Animate multiple object translation
+ * @param {WorldObject[]} objects - array of objects to translate
+ * @param {Vector} vector - vector to apply to objects
+ * @param {number} time - animation time
+ * @param {KEYFRAME_FUNCTIONS} kframe_func - keyframe function to animate with
+ * @param {function} [callback] - function to call after animation finished
+ */
 WorldObject.animate_object_translations = function(objects, vector, time, kframe_func, callback) {
-    /*
-     * Animate multiple object rotations
-     * Callback will only be called once.
-     */
+    // Callback will only be called once.
     for (let x = 0; x<objects.length; x++) {
         let c = undefined;
         if (x == objects.length - 1) {
@@ -876,29 +1067,27 @@ WorldObject.animate_object_translations = function(objects, vector, time, kframe
     }
 }
 
+/**
+ * Defines 3d world
+ * @constructor
+ * @param {Object} args - object containing information about world
+ * @param {WorldObject[]} args.objects - objects in world
+ * @param {Camera} args.camera - Camera used for rendering
+ * @param {HTMLElement} args.canvas_ctx - Canvas context used for rendering
+ */
 function World(args) {
-    /*
-     * Defines world
-     * Parameters:
-     *   objects: list of WorldObject representing objects in world
-     *   camera: Camera object used for rendering
-     *   canvas_ctx: Canvas context used for rendering
-     */
-
     this.objects = args.objects;
     this.camera = args.camera;
     this.ctx = args.canvas_ctx;
 }
 
-
+/**
+ * Place object in mesh, according to its attributes
+ * @param {Mesh} mesh - Mesh object will be placed in
+ * @param {WorldObject} WorldObject - Object to place in mesh
+ * @returns {Mesh}
+ */
 World.place_object_in_mesh = function(mesh, object) {
-    /*
-     * Return mesh with object placed in it (according to its attributes)
-     * Parameters:
-     *   object: WorldObject
-     *   mesh: Mesh
-     */
-
     // clone object mesh to avoid entanglements
     let mesh_to_add = object.mesh.clone();
 
@@ -946,11 +1135,14 @@ World.place_object_in_mesh = function(mesh, object) {
     return mesh;
 }
 
+/**
+ * Orient mesh according to world camera settings. Used to render mesh according
+ * to camera position and rotation (i.e the world actually moves around the
+ * camera, unlike real life)
+ * @param {Mesh} mesh - mesh to orient
+ * @returns {Mesh}
+ */
 World.prototype.orient_to_camera_view = function(mesh) {
-    /*
-     * Orient given mesh to camera view
-     */
-
     // translate mesh to camera position
     let cam_translation = (new Coord(0,0,0)).subtract(this.camera.position);
     mesh.translate(cam_translation);
@@ -961,10 +1153,14 @@ World.prototype.orient_to_camera_view = function(mesh) {
     return mesh;
 }
 
+/**
+ * Project mesh into 2d points. Assumes the mesh is camera oriented, use
+ * `orient_to_camera_view` to achieve this. Returns an array of points,
+ * represented as an array with form `[x, y]`.
+ * @param {Mesh} mesh - mesh to project
+ * @returns {number[][]}
+ */
 World.prototype.project = function(mesh) {
-    /*
-     * Project given camera-oriented mesh
-     */
     let projected_points = [];
 
     let origin_x = this.ctx.canvas.width/2;
@@ -994,6 +1190,11 @@ World.prototype.project = function(mesh) {
     return projected_points;
 }
 
+/**
+ * Draw projection on world canvas ctx.
+ * @param {number[][]} projected_points - projected points
+ * @param {Mesh} mesh - mesh projection came from
+ */
 World.prototype.draw = function(projected_points, mesh) {
     /*
      * Draw projection on screen using painter's algorithm
@@ -1092,13 +1293,13 @@ World.prototype.draw = function(projected_points, mesh) {
     }
 }
 
+/**
+ * Render world to canvas
+ * @param {Object} args - object containing rendering info
+ * @param {Boolean} args.clear_screen - set to `true` if canvas should be
+ * cleared before rendering.
+ */
 World.prototype.render = function(args) {
-    /*
-     * Render world to canvas
-     * Parameters:
-     *   clear_screen: true if canvas should be cleared before rendering
-     */
-
     if (args.clear_screen == true) {
         this.ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
